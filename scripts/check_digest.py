@@ -17,6 +17,18 @@ BAD_HEADINGS = {
     "acknowledgments",
 }
 
+ADDED_SUMMARY_HEADING_PATTERNS = (
+    r"^#+\s*(中文)?(总结|概要|概述|主要内容|核心观点|核心发现|机制总结|临床意义)\s*$",
+    r"^#+\s*(key\s+takeaways?|takeaways?|main\s+points?|key\s+points?|brief\s+summary)\s*$",
+)
+
+SUMMARY_META_PATTERNS = (
+    r"^\t?(本节|该段|这一段|这一节|该部分)(主要|总体|简要)?(说明|介绍|讨论|总结|概述)",
+    r"^\t?以下(是|为).*(总结|概述|要点|翻译)",
+    r"^\t?(this\s+section|this\s+paragraph)\s+(mainly\s+)?(summarizes|discusses|describes)",
+    r"^\t?the\s+following\s+(is|are).*(summary|takeaways?)",
+)
+
 
 def is_heading(line: str) -> bool:
     return bool(re.match(r"^#{1,6}\s+\S", line))
@@ -25,6 +37,17 @@ def is_heading(line: str) -> bool:
 def is_image(line: str) -> bool:
     stripped = line.strip()
     return stripped.startswith("![") or stripped.startswith("![[")
+
+
+def looks_like_added_summary_heading(line: str) -> bool:
+    stripped = line.strip()
+    lower = stripped.lower()
+    return any(re.search(pattern, lower, flags=re.IGNORECASE) for pattern in ADDED_SUMMARY_HEADING_PATTERNS)
+
+
+def looks_like_summary_meta_line(line: str) -> bool:
+    stripped = line.strip()
+    return any(re.search(pattern, stripped, flags=re.IGNORECASE) for pattern in SUMMARY_META_PATTERNS)
 
 
 def is_structural(line: str, allow_images: bool) -> bool:
@@ -91,6 +114,8 @@ def check(path: Path, allow_images: bool) -> list[str]:
             normalized = re.sub(r"[^a-z]", "", lower)
             if normalized in BAD_HEADINGS:
                 errors.append(f"line {idx}: forbidden heading '{stripped}'")
+            if looks_like_added_summary_heading(stripped):
+                errors.append(f"line {idx}: added summary/analysis heading is not allowed: '{stripped}'")
             if "conclusion" in lower or "conclusions" in lower:
                 last_conclusion = idx
             if lower.startswith("box"):
@@ -98,6 +123,9 @@ def check(path: Path, allow_images: bool) -> list[str]:
 
         if is_image(stripped) and not allow_images:
             errors.append(f"line {idx}: image/embed syntax is not allowed in text-only mode")
+
+        if looks_like_summary_meta_line(line):
+            errors.append(f"line {idx}: possible summary/paraphrase metacommentary; translate the source sentence directly")
 
     if first_box != -1 and last_conclusion != -1 and first_box < last_conclusion:
         errors.append("Box section appears before Conclusions")
