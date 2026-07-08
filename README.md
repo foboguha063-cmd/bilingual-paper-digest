@@ -18,6 +18,20 @@ git clone <your-repo-url> bilingual-paper-digest
 cp -R bilingual-paper-digest ~/.codex/skills/
 ```
 
+可选：安装轻量 PDF 增强环境，用于更稳定的 PDF 抽取、分块和 token 估算：
+
+```bash
+cd bilingual-paper-digest
+python3 scripts/setup_environment.py --profile light
+.venv/bin/python scripts/probe_tools.py
+```
+
+若只想检查当前机器可用能力：
+
+```bash
+python3 scripts/probe_tools.py
+```
+
 安装后重启 Codex，使用类似下面的自然语言触发：
 
 ```text
@@ -39,6 +53,7 @@ cp -R bilingual-paper-digest ~/.codex/skills/
 - 可选生成专有名词、统计方法、表征方法、材料/试剂、疾病/脑区/算法等知识卡片，并建立论文笔记与知识卡片之间的双向链接。
 - 知识卡片使用规范名、别名、上下级关系和来源论文回链，建卡前需扫描既有卡片，避免同一概念重复建卡或跨文件夹混杂。
 - 按论文类型调整章节处理策略，覆盖研究论文、综述、方法、资源/数据集、临床/人群研究、会议论文等。
+- 可选使用结构化 PDF 管线，将 PDF 预先抽取为 `.bilingual-paper-digest/source.jsonl` 和 `translation_units.jsonl`，减少重复 token 消耗并提高对齐检查能力。
 - 提供 `scripts/check_digest.py` 对双语句对、段落空行、禁用章节、图片嵌入和 Box 位置进行格式质检；提供 `scripts/check_knowledge_cards.py` 检查知识卡片标题重复和别名冲突。
 
 ## 主要产物
@@ -71,11 +86,19 @@ cp -R bilingual-paper-digest ~/.codex/skills/
 references/obsidian-vault-style.md  # Obsidian 文献库规则
 references/knowledge-card-system.md # 术语/方法/统计知识卡片规则
 references/paper-type-routing.md    # 不同论文类型的整理策略
+references/pdf-extraction-pipeline.md # PDF 抽取与工具路由
+references/book-translation-mode.md # PDF 书籍/长文档翻译模式
+references/translation-memory.md    # 术语注入、缓存与续译规则
+references/environment-and-sharing.md # 新机器安装与共享使用说明
 references/improvement-roadmap.md   # 后续改进点与优先级
 examples/minimal-paper-note.md      # 纯文本标准样例
 examples/obsidian-material-note.md  # Obsidian 材料论文样例
 examples/knowledge-card-term.md     # 专有名词知识卡样例
 examples/knowledge-card-statistics.md # 统计方法知识卡样例
+scripts/setup_environment.py        # 创建轻量可选运行环境
+scripts/probe_tools.py              # 检测 PDF/OCR/书籍模式可用能力
+scripts/extract_pdf_structure.py    # PDF -> source.jsonl/source_map.json
+scripts/build_translation_units.py  # source.jsonl -> translation_units.jsonl
 scripts/check_digest.py             # 格式质检脚本
 scripts/check_knowledge_cards.py    # 知识卡片去重与别名冲突检查
 ```
