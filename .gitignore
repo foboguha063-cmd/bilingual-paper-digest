@@ -2,3 +2,6 @@
 *.tmp
 *.log
 __pycache__/
+.venv/
+.bilingual-paper-digest/
+translation_cache.jsonl
