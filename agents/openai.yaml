@@ -1,4 +1,4 @@
 interface:
   display_name: "Bilingual Paper Digest"
-  short_description: "Create trained bilingual Markdown paper notes"
-  default_prompt: "Use $bilingual-paper-digest to turn this paper into the trained bilingual Markdown format."
+  short_description: "Create trained bilingual Obsidian-ready paper notes"
+  default_prompt: "Use $bilingual-paper-digest to turn this paper into the trained bilingual Markdown format, using the Obsidian vault rules when relevant."
