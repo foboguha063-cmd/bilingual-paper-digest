@@ -1,6 +1,6 @@
 # bilingual-paper-digest
 
-`bilingual-paper-digest` 是一个面向用户固定文献笔记格式的中英文双语整理 skill。它把 PDF、DOI、论文正文或补充材料整理为紧凑的 Markdown 文献笔记，并可按 `/Users/jisufeima/Documents/文献库` 的 Obsidian 文献库体系写入材料或医学论文笔记目录。
+`bilingual-paper-digest` 是一个面向学术论文阅读笔记的中英文双语整理 skill。它把 PDF、DOI、论文正文、预印本、会议论文或补充材料整理为紧凑的 Markdown 文献笔记，适用于研究论文、综述、方法论文、临床研究、材料与工程论文等多数常见学术文献。
 
 ## 安装
 
@@ -34,7 +34,9 @@ cp -R bilingual-paper-digest ~/.codex/skills/
 - 保留原文引用编号位置，并把抽取出的上标编号统一整理为 `[1]` 这类形式。
 - 同一原文段落内句对之间不空行，不同原文段落之间保留清晰空行。
 - Box 类旁栏内容统一移动到文档末尾。
-- Obsidian 模式下按现有 `材料论文及笔记`、`医学论文及笔记`、`材料知识库` 体系处理路径、wiki 链接和 `figure/` 资源约定。
+- Obsidian 模式下按目标 vault 的文件夹、wiki 链接和 `figure/` 资源约定处理。
+- 可选生成专有名词、统计方法、表征方法、材料/试剂、疾病/脑区/算法等知识卡片，并建立论文笔记与知识卡片之间的双向链接。
+- 按论文类型调整章节处理策略，覆盖研究论文、综述、方法、资源/数据集、临床/人群研究、会议论文等。
 - 提供 `scripts/check_digest.py` 对双语句对、段落空行、禁用章节、图片嵌入和 Box 位置进行格式质检。
 
 ## 主要产物
@@ -65,8 +67,13 @@ cp -R bilingual-paper-digest ~/.codex/skills/
 
 ```text
 references/obsidian-vault-style.md  # Obsidian 文献库规则
+references/knowledge-card-system.md # 术语/方法/统计知识卡片规则
+references/paper-type-routing.md    # 不同论文类型的整理策略
+references/improvement-roadmap.md   # 后续改进点与优先级
 examples/minimal-paper-note.md      # 纯文本标准样例
 examples/obsidian-material-note.md  # Obsidian 材料论文样例
+examples/knowledge-card-term.md     # 专有名词知识卡样例
+examples/knowledge-card-statistics.md # 统计方法知识卡样例
 scripts/check_digest.py             # 格式质检脚本
 ```
 
