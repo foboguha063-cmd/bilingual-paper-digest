@@ -5,6 +5,7 @@ This roadmap records improvements still worth making after comparing this skill 
 ## Implemented
 
 - Sentence-level English-Chinese alignment with tab-indented Chinese lines.
+- Explicit fidelity constraints against paragraph compression, review-style paraphrase, invented analytic headings, and unfinished-section summaries.
 - Paragraph spacing rule: no blank line within one source paragraph, at least two blank lines between source paragraphs.
 - Citation marker preservation near the original phrase.
 - Corresponding-author-only team line.
@@ -37,6 +38,7 @@ This roadmap records improvements still worth making after comparing this skill 
    - misplaced Box sections
    - invalid or overused Obsidian wiki links
    - missing team/DOI/article-type header fields
+   - stronger source-to-output sentence-count drift when a source map is available
 
 6. **Uncertainty notes**
    Add an optional compact `整理说明` section or sidecar file for extraction uncertainty, missing pages, OCR failures, or unresolved corresponding-author ambiguity. Keep it out of the paper note unless requested.
