@@ -1,15 +1,18 @@
 ---
 name: bilingual-paper-digest
-description: Create Chinese-English academic Markdown reading notes from papers in the user's trained format, including Obsidian vault-ready notes for the user's 文献库. Use when the user asks to 整理文献, 整理为上述格式, 尚书格式, 双语整理, 原文+中文翻译, Obsidian 文献库整理, or asks Codex to process a PDF/DOI/article into a bilingual Markdown literature note that matches the local paper-note style.
+description: Create Chinese-English academic Markdown reading notes from research papers, reviews, preprints, conference papers, methods papers, clinical studies, and materials/engineering articles in a trained sentence-level bilingual format. Use when the user asks to 整理文献, 整理为上述格式, 尚书格式, 双语整理, 原文+中文翻译, Obsidian 文献整理, or asks Codex to process a PDF/DOI/article into a bilingual Markdown literature note.
 ---
 
 # Bilingual Paper Digest
 
-Create a Markdown paper note that imitates the user's established folder style: bibliographic header, sentence-level English-Chinese pairs, tab-indented Chinese academic translation, original citation markers, and no figure/table extraction.
+Create a Markdown paper note for academic literature: bibliographic header, sentence-level English-Chinese pairs, tab-indented Chinese academic translation, original citation markers, and optional Obsidian-ready linking. The default artifact is a compact bilingual note rather than a full reader, slide deck, or summary.
 
 ## Bundled Resources
 
 - Read `references/obsidian-vault-style.md` when the user mentions Obsidian, 文献库, vault paths, wiki links, figure folders, or asks to write the note into the local literature library.
+- Read `references/knowledge-card-system.md` when the user asks to extract terminology, named methods, statistical methods, materials, diseases, brain regions, algorithms, characterization methods, or reusable concepts as Obsidian knowledge cards.
+- Read `references/paper-type-routing.md` before handling unfamiliar disciplines or non-standard papers such as methods, resources, clinical studies, reviews, and conference papers.
+- Read `references/improvement-roadmap.md` when updating this skill or evaluating remaining gaps.
 - Use `examples/minimal-paper-note.md` as the compact text-only output model.
 - Use `examples/obsidian-material-note.md` as the Obsidian material-paper model with restrained wiki links.
 - Run `scripts/check_digest.py <output.md>` after creating or revising a text-only note. Use `--allow-images` only when the user explicitly requests figure/media integration.
@@ -18,10 +21,12 @@ Create a Markdown paper note that imitates the user's established folder style: 
 
 1. Read the source paper completely enough to identify title, authors, affiliations, journal, DOI, publication date, article type, sections, boxes, and references.
 2. If the source is a PDF, use PDF extraction tools. For two-column review PDFs, inspect extraction order and clean mixed columns, sidebars, headers, footers, author affiliations, figure captions, and references.
-3. Create or update one `.md` file in the user's working folder unless they specify another path.
-4. If writing into the Obsidian literature vault, follow `references/obsidian-vault-style.md` for folder choice, filename, wiki links, and attachment behavior.
-5. Preserve the source section flow for main text. Move all Box-style side content to the document end.
-6. Do not summarize instead of translating. Translate sentence by sentence while preserving the source paragraph boundaries and technical detail.
+3. Classify the paper type before writing the note. Use `references/paper-type-routing.md` if the structure is not a standard research article.
+4. Create or update one `.md` file in the user's working folder unless they specify another path.
+5. If writing into an Obsidian vault, follow `references/obsidian-vault-style.md` for folder choice, filename, wiki links, and attachment behavior.
+6. If the user asks for knowledge cards or bidirectional links, follow `references/knowledge-card-system.md`; otherwise keep wiki links restrained and do not create separate cards.
+7. Preserve the source section flow for main text. Move all Box-style side content to the document end.
+8. Do not summarize instead of translating. Translate sentence by sentence while preserving the source paragraph boundaries and technical detail.
 
 ## Header Format
 
