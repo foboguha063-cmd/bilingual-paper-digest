@@ -1,5 +1,16 @@
 # EIS（电化学阻抗谱）
 
+## **规范名 / 别名**
+- 规范名：EIS（电化学阻抗谱）
+- 别名 / 同义名：Electrochemical Impedance Spectroscopy；电化学阻抗谱；电化学交流阻抗谱
+- 不合并：electrochemical impedance tomography
+
+## **知识层级**
+- 所属领域：表征测量 / 电学与离子导电测试
+- 上级概念：[[电化学表征]]
+- 下级概念：[[Nyquist plot]]；[[Bode plot]]
+- 同级 / 相关概念：[[VTF]]；[[FTIR（傅里叶红外光谱）]]
+
 ## **定义**
 电化学阻抗谱（Electrochemical Impedance Spectroscopy, EIS）是在不同频率交流扰动下测量材料或界面阻抗响应的方法，常用于分析离子传导、电极界面和电荷传输过程。
 
