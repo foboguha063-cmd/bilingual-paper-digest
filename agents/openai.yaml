@@ -1,4 +1,4 @@
 interface:
   display_name: "Bilingual Paper Digest"
-  short_description: "Create sentence-level bilingual academic paper notes"
-  default_prompt: "Use $bilingual-paper-digest to turn this paper into the trained bilingual Markdown literature-note format."
+  short_description: "Create source-faithful bilingual academic notes and cards"
+  default_prompt: "Use $bilingual-paper-digest to turn this paper, chapter, or source text into the trained bilingual Markdown format."

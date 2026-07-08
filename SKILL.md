@@ -1,11 +1,11 @@
 ---
 name: bilingual-paper-digest
-description: Create Chinese-English academic Markdown reading notes from research papers, reviews, preprints, conference papers, methods papers, clinical studies, and materials/engineering articles in a trained sentence-level bilingual format. Use when the user asks to 整理文献, 整理为上述格式, 尚书格式, 双语整理, 原文+中文翻译, Obsidian 文献整理, or asks Codex to process a PDF/DOI/article into a bilingual Markdown literature note.
+description: Create Chinese-English academic Markdown notes from papers, reviews, preprints, conference papers, methods papers, clinical studies, materials/engineering articles, PDF books or chapters, and Obsidian knowledge-card workflows in a trained source-faithful bilingual format. Use when the user asks to 整理文献, 整理为上述格式, 尚书格式, 双语整理, 原文+中文翻译, Obsidian 文献整理, PDF 书籍翻译, 知识卡片整理, or asks Codex to process a PDF/DOI/article/book into a bilingual Markdown literature note.
 ---
 
 # Bilingual Paper Digest
 
-Create a Markdown paper note for academic literature: bibliographic header, sentence-level English-Chinese pairs, tab-indented Chinese academic translation, original citation markers, and optional Obsidian-ready linking. The default artifact is a compact bilingual note rather than a full reader, slide deck, or summary.
+Create a Markdown academic reading note: bibliographic header, sentence-level English-Chinese pairs, tab-indented Chinese academic translation, original citation markers, and optional Obsidian-ready linking or knowledge cards. The default artifact is a compact bilingual note rather than a full reader, slide deck, or summary.
 
 ## Bundled Resources
 
@@ -16,25 +16,30 @@ Create a Markdown paper note for academic literature: bibliographic header, sent
 - Read `references/book-translation-mode.md` when the user asks to translate or organize a PDF book, monograph, textbook, dissertation, report, or long chapter-based document.
 - Read `references/translation-memory.md` when reducing token use, reusing previous translations, preserving terminology across runs, or resuming long documents.
 - Read `references/environment-and-sharing.md` when setting up this skill for a new machine, another user, or a shared GitHub installation.
+- Read `references/skill-suite-routing.md` when deciding how to route paper, book, and knowledge-base tasks; when explaining minimal invocation phrases for other users; or when considering a future split into companion skills.
 - Read `references/improvement-roadmap.md` when updating this skill or evaluating remaining gaps.
 - Use `examples/minimal-paper-note.md` as the compact text-only output model.
 - Use `examples/obsidian-material-note.md` as the Obsidian material-paper model with restrained wiki links.
 - Run `scripts/probe_tools.py` when environment capability is uncertain.
 - Run `scripts/extract_pdf_structure.py <paper.pdf>` before long, complex, scanned, or book-like PDF work so source text is captured once and reused from `.bilingual-paper-digest/source.jsonl`.
 - Run `scripts/build_translation_units.py <source.jsonl>` when sentence-level batching, cache reuse, or stricter source-output alignment is needed.
+- Run `scripts/translation_cache.py apply/update/stats` when resuming long translations or avoiding repeated token use for unchanged source sentences.
+- Run `scripts/check_source_alignment.py --units <translation_units.jsonl> --markdown <output.md>` when the Markdown should be proven against structured source units.
+- Run `scripts/install_skill.py` when installing this repository into another user's local Codex skills directory.
 - Run `scripts/check_digest.py <output.md>` after creating or revising a text-only note. Use `--allow-images` only when the user explicitly requests figure/media integration.
 - Run `scripts/check_knowledge_cards.py <card-files-or-card-root>` after creating or updating knowledge cards when filesystem access is available; use `--strict` for newly created card files.
 
 ## Core Workflow
 
-1. Read the source paper completely enough to identify title, authors, affiliations, journal, DOI, publication date, article type, sections, boxes, and references.
-2. If the source is a PDF, choose the extraction route first. For ordinary selectable PDFs, use available PDF text extraction; for complex or repeated work, run `scripts/extract_pdf_structure.py`; for scanned PDFs, OCR first; for books, follow `references/book-translation-mode.md`.
-3. Classify the paper type before writing the note. Use `references/paper-type-routing.md` if the structure is not a standard research article.
-4. Create or update one `.md` file in the user's working folder unless they specify another path.
-5. If writing into an Obsidian vault, follow `references/obsidian-vault-style.md` for folder choice, filename, wiki links, and attachment behavior.
-6. If the user asks for knowledge cards or bidirectional links, follow `references/knowledge-card-system.md`; before creating any card, scan existing card filenames, H1 titles, aliases, and related folders so aliases merge into existing canonical cards instead of creating duplicates.
-7. Preserve the source section flow for main text. Move all Box-style side content to the document end.
-8. Do not summarize, compress, paraphrase into review-style prose, or replace source sentences with extracted "main ideas". Translate sentence by sentence while preserving the source paragraph boundaries, argument order, qualifiers, numbers, and technical detail.
+1. Route the task first: paper note, book/chapter translation, Obsidian literature note, knowledge-card extraction, or format/source-alignment checking. Use `references/skill-suite-routing.md` for ambiguous multi-part requests.
+2. Read the source document completely enough to identify title, authors, affiliations, venue, DOI/ISBN if present, publication date, document type, sections, boxes, and references.
+3. If the source is a PDF, choose the extraction route first. For ordinary selectable PDFs, use available PDF text extraction; for complex or repeated work, run `scripts/extract_pdf_structure.py`; for scanned PDFs, OCR first; for books, follow `references/book-translation-mode.md`.
+4. Classify the paper type before writing the note. Use `references/paper-type-routing.md` if the structure is not a standard research article.
+5. Create or update one `.md` file in the user's working folder unless they specify another path.
+6. If writing into an Obsidian vault, follow `references/obsidian-vault-style.md` for folder choice, filename, wiki links, and attachment behavior.
+7. If the user asks for knowledge cards or bidirectional links, follow `references/knowledge-card-system.md`; before creating any card, scan existing card filenames, H1 titles, aliases, and related folders so aliases merge into existing canonical cards instead of creating duplicates.
+8. Preserve the source section flow for main text. Move all Box-style side content to the document end.
+9. Do not summarize, compress, paraphrase into review-style prose, or replace source sentences with extracted "main ideas". Translate sentence by sentence while preserving the source paragraph boundaries, argument order, qualifiers, numbers, and technical detail.
 
 ## Header Format
 
@@ -189,6 +194,7 @@ Before responding:
 - Confirm no added summary sections, analytic headings, "main idea" sentences, or paragraph-level Chinese paraphrases have replaced source sentences.
 - Confirm dense results/methods sentences retain all numbers, units, sample sizes, conditions, statistical terms, and limitations from the original sentence.
 - For PDFs processed through the structured pipeline, confirm `.bilingual-paper-digest/source.jsonl` or `translation_units.jsonl` exists and that the Markdown was rendered from retained source sentences rather than directly from an untracked PDF impression.
+- For structured PDF/book workflows, run `scripts/check_source_alignment.py` on the final Markdown unless sections were intentionally omitted; if omissions are intended, mark those translation units as `skipped` before checking.
 - If knowledge cards were created or updated, confirm each concept has one canonical card, alternate names are listed as aliases, parent/child relationships are marked, and cross-domain concepts are linked instead of duplicated across folders.
 - Run `scripts/check_digest.py` on the output when filesystem access is available, and fix any reported errors before finalizing.
 - Run `scripts/check_knowledge_cards.py` on created/updated knowledge cards or the target card root when filesystem access is available, and fix duplicate-title or alias-conflict findings before finalizing.

@@ -13,25 +13,33 @@ Keep the skill portable:
 
 ## Quick Start For Another User
 
-After cloning or copying the skill:
+After cloning the skill:
 
 ```bash
+git clone https://github.com/foboguha063-cmd/bilingual-paper-digest.git
 cd bilingual-paper-digest
-python3 scripts/setup_environment.py --profile light
-.venv/bin/python scripts/probe_tools.py
-```
-
-Then copy the skill into Codex:
-
-```bash
-mkdir -p ~/.codex/skills
-cp -R bilingual-paper-digest ~/.codex/skills/
+python3 scripts/install_skill.py --with-env light
 ```
 
 Restart Codex and ask:
 
 ```text
 使用 bilingual-paper-digest 整理这篇论文。
+```
+
+If the user wants to inspect environment capability in the installed copy:
+
+```bash
+~/.codex/skills/bilingual-paper-digest/.venv/bin/python ~/.codex/skills/bilingual-paper-digest/scripts/probe_tools.py
+```
+
+Manual fallback:
+
+```bash
+mkdir -p ~/.codex/skills
+rsync -a --delete --exclude='.git' --exclude='.venv' --exclude='.bilingual-paper-digest' bilingual-paper-digest/ ~/.codex/skills/bilingual-paper-digest/
+cd ~/.codex/skills/bilingual-paper-digest
+python3 scripts/setup_environment.py --profile light
 ```
 
 ## Profiles
@@ -60,12 +68,21 @@ Use `scripts/probe_tools.py` to inspect availability before deciding on a workfl
 For non-technical users, keep the workflow to three commands:
 
 ```bash
-git clone <repo-url> bilingual-paper-digest
+git clone https://github.com/foboguha063-cmd/bilingual-paper-digest.git
 cd bilingual-paper-digest
-python3 scripts/setup_environment.py --profile light
+python3 scripts/install_skill.py --with-env light
 ```
 
 The user should not need to understand Docling, GROBID, OCRmyPDF, or tiktoken to use the default paper-note workflow. Those tools are routed internally by Codex through this skill's references and scripts.
+
+For updates after a repository pull, run:
+
+```bash
+git pull
+python3 scripts/install_skill.py --clean
+```
+
+Use `--with-env light` again only if the installed environment is missing or stale.
 
 ## Runtime Artifacts
 

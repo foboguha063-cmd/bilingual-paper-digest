@@ -47,10 +47,31 @@ Do not paste the entire Obsidian knowledge base into the translation prompt. Use
 
 1. Build `translation_units.jsonl`.
 2. Compute `source_hash` for each unit.
-3. Look up `source_hash` in `translation_cache.jsonl`.
-4. Reuse checked translations.
+3. Run cache stats:
+
+```bash
+python3 scripts/translation_cache.py stats \
+  --units .bilingual-paper-digest/translation_units.jsonl \
+  --cache .bilingual-paper-digest/translation_cache.jsonl
+```
+
+4. Apply checked translations:
+
+```bash
+python3 scripts/translation_cache.py apply \
+  --units .bilingual-paper-digest/translation_units.jsonl \
+  --cache .bilingual-paper-digest/translation_cache.jsonl \
+  --out .bilingual-paper-digest/translation_units.cached.jsonl
+```
+
 5. Translate only missing or changed units.
-6. Append new checked translations to the cache.
+6. Update the cache after review:
+
+```bash
+python3 scripts/translation_cache.py update \
+  --units .bilingual-paper-digest/translation_units.cached.jsonl \
+  --cache .bilingual-paper-digest/translation_cache.jsonl
+```
 
 ## Review Workflow
 
@@ -58,5 +79,12 @@ Use two passes only when quality matters:
 
 1. Translation pass: translate each source sentence faithfully.
 2. Alignment pass: compare source and Chinese line for missing numbers, negation, citations, units, and terminology.
+3. Structured check when source units are available:
+
+```bash
+python3 scripts/check_source_alignment.py \
+  --units .bilingual-paper-digest/translation_units.cached.jsonl \
+  --markdown output.md
+```
 
 Do not run a free-form "polish" pass because it tends to compress or summarize the source.

@@ -64,6 +64,7 @@ Use `translation_units.jsonl` status values:
 - `skipped`: intentionally omitted, with reason
 
 When resuming, translate only `pending` units.
+Use `scripts/translation_cache.py apply` before translating a resumed chapter, then `scripts/translation_cache.py update` after the chapter has passed source-alignment review.
 
 ## Public-Use Simplicity
 

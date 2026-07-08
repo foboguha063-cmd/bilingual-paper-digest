@@ -34,6 +34,7 @@ Extract a paper:
 ```bash
 python3 scripts/extract_pdf_structure.py paper.pdf
 python3 scripts/build_translation_units.py .bilingual-paper-digest/source.jsonl
+python3 scripts/translation_cache.py apply --units .bilingual-paper-digest/translation_units.jsonl --cache .bilingual-paper-digest/translation_cache.jsonl --out .bilingual-paper-digest/translation_units.cached.jsonl
 ```
 
 Extract selected pages:
@@ -93,5 +94,7 @@ Translate from the structured units when accuracy, resumability, or token effici
 - Extract once, reuse `source.jsonl`.
 - Translate only pending `translation_units.jsonl` units.
 - Cache translations by `source_hash`.
+- Run `scripts/translation_cache.py stats` before translating to estimate how much work can be reused.
+- Run `scripts/check_source_alignment.py` after rendering Markdown when all non-skipped units should appear in the final note.
 - Inject only matched terms from the current block, not the entire knowledge base.
 - Use stable prompt prefixes for prompt caching when calling an API.
