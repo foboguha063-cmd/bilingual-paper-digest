@@ -1,19 +1,27 @@
 ---
 name: bilingual-paper-digest
-description: Create Chinese-English academic Markdown reading notes from papers in the user's trained format. Use when the user asks to 整理文献, 整理为上述格式, 尚书格式, 双语整理, 原文+中文翻译, or asks Codex to process a PDF/DOI/article into a bilingual Markdown literature note that matches the local paper-note style.
+description: Create Chinese-English academic Markdown reading notes from papers in the user's trained format, including Obsidian vault-ready notes for the user's 文献库. Use when the user asks to 整理文献, 整理为上述格式, 尚书格式, 双语整理, 原文+中文翻译, Obsidian 文献库整理, or asks Codex to process a PDF/DOI/article into a bilingual Markdown literature note that matches the local paper-note style.
 ---
 
 # Bilingual Paper Digest
 
 Create a Markdown paper note that imitates the user's established folder style: bibliographic header, sentence-level English-Chinese pairs, tab-indented Chinese academic translation, original citation markers, and no figure/table extraction.
 
+## Bundled Resources
+
+- Read `references/obsidian-vault-style.md` when the user mentions Obsidian, 文献库, vault paths, wiki links, figure folders, or asks to write the note into the local literature library.
+- Use `examples/minimal-paper-note.md` as the compact text-only output model.
+- Use `examples/obsidian-material-note.md` as the Obsidian material-paper model with restrained wiki links.
+- Run `scripts/check_digest.py <output.md>` after creating or revising a text-only note. Use `--allow-images` only when the user explicitly requests figure/media integration.
+
 ## Core Workflow
 
 1. Read the source paper completely enough to identify title, authors, affiliations, journal, DOI, publication date, article type, sections, boxes, and references.
 2. If the source is a PDF, use PDF extraction tools. For two-column review PDFs, inspect extraction order and clean mixed columns, sidebars, headers, footers, author affiliations, figure captions, and references.
 3. Create or update one `.md` file in the user's working folder unless they specify another path.
-4. Preserve the source section flow for main text. Move all Box-style side content to the document end.
-5. Do not summarize instead of translating. Translate sentence by sentence while preserving the source paragraph boundaries and technical detail.
+4. If writing into the Obsidian literature vault, follow `references/obsidian-vault-style.md` for folder choice, filename, wiki links, and attachment behavior.
+5. Preserve the source section flow for main text. Move all Box-style side content to the document end.
+6. Do not summarize instead of translating. Translate sentence by sentence while preserving the source paragraph boundaries and technical detail.
 
 ## Header Format
 
@@ -101,6 +109,8 @@ Unless explicitly requested, omit:
 
 Retain ordinary in-text mentions such as `(FIG. 1)`, `(TABLE 1)`, or `(BOX 1)` if they appear inside a prose sentence.
 
+For Obsidian notes, do not add wiki links, images, personal annotation blocks, or knowledge-base candidate sections unless the user asks for those features or the vault style reference says they are appropriate for the requested mode.
+
 ## Boxes And Side Content
 
 Move Box content to the end of the Markdown after `# Conclusions`.
@@ -140,3 +150,4 @@ Before responding:
 - Confirm each English sentence is followed immediately by its tab-indented Chinese translation.
 - Confirm sentence pairs from the same source paragraph are adjacent, with no extra blank lines between them.
 - Confirm there are clear blank lines or separators between source paragraphs.
+- Run `scripts/check_digest.py` on the output when filesystem access is available, and fix any reported errors before finalizing.
