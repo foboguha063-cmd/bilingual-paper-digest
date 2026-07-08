@@ -16,6 +16,7 @@ Create a Markdown paper note for academic literature: bibliographic header, sent
 - Use `examples/minimal-paper-note.md` as the compact text-only output model.
 - Use `examples/obsidian-material-note.md` as the Obsidian material-paper model with restrained wiki links.
 - Run `scripts/check_digest.py <output.md>` after creating or revising a text-only note. Use `--allow-images` only when the user explicitly requests figure/media integration.
+- Run `scripts/check_knowledge_cards.py <card-files-or-card-root>` after creating or updating knowledge cards when filesystem access is available; use `--strict` for newly created card files.
 
 ## Core Workflow
 
@@ -24,7 +25,7 @@ Create a Markdown paper note for academic literature: bibliographic header, sent
 3. Classify the paper type before writing the note. Use `references/paper-type-routing.md` if the structure is not a standard research article.
 4. Create or update one `.md` file in the user's working folder unless they specify another path.
 5. If writing into an Obsidian vault, follow `references/obsidian-vault-style.md` for folder choice, filename, wiki links, and attachment behavior.
-6. If the user asks for knowledge cards or bidirectional links, follow `references/knowledge-card-system.md`; otherwise keep wiki links restrained and do not create separate cards.
+6. If the user asks for knowledge cards or bidirectional links, follow `references/knowledge-card-system.md`; before creating any card, scan existing card filenames, H1 titles, aliases, and related folders so aliases merge into existing canonical cards instead of creating duplicates.
 7. Preserve the source section flow for main text. Move all Box-style side content to the document end.
 8. Do not summarize instead of translating. Translate sentence by sentence while preserving the source paragraph boundaries and technical detail.
 
@@ -155,4 +156,6 @@ Before responding:
 - Confirm each English sentence is followed immediately by its tab-indented Chinese translation.
 - Confirm sentence pairs from the same source paragraph are adjacent, with no extra blank lines between them.
 - Confirm there are clear blank lines or separators between source paragraphs.
+- If knowledge cards were created or updated, confirm each concept has one canonical card, alternate names are listed as aliases, parent/child relationships are marked, and cross-domain concepts are linked instead of duplicated across folders.
 - Run `scripts/check_digest.py` on the output when filesystem access is available, and fix any reported errors before finalizing.
+- Run `scripts/check_knowledge_cards.py` on created/updated knowledge cards or the target card root when filesystem access is available, and fix duplicate-title or alias-conflict findings before finalizing.
