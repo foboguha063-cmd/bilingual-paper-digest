@@ -36,8 +36,9 @@ cp -R bilingual-paper-digest ~/.codex/skills/
 - Box 类旁栏内容统一移动到文档末尾。
 - Obsidian 模式下按目标 vault 的文件夹、wiki 链接和 `figure/` 资源约定处理。
 - 可选生成专有名词、统计方法、表征方法、材料/试剂、疾病/脑区/算法等知识卡片，并建立论文笔记与知识卡片之间的双向链接。
+- 知识卡片使用规范名、别名、上下级关系和来源论文回链，建卡前需扫描既有卡片，避免同一概念重复建卡或跨文件夹混杂。
 - 按论文类型调整章节处理策略，覆盖研究论文、综述、方法、资源/数据集、临床/人群研究、会议论文等。
-- 提供 `scripts/check_digest.py` 对双语句对、段落空行、禁用章节、图片嵌入和 Box 位置进行格式质检。
+- 提供 `scripts/check_digest.py` 对双语句对、段落空行、禁用章节、图片嵌入和 Box 位置进行格式质检；提供 `scripts/check_knowledge_cards.py` 检查知识卡片标题重复和别名冲突。
 
 ## 主要产物
 
@@ -75,6 +76,7 @@ examples/obsidian-material-note.md  # Obsidian 材料论文样例
 examples/knowledge-card-term.md     # 专有名词知识卡样例
 examples/knowledge-card-statistics.md # 统计方法知识卡样例
 scripts/check_digest.py             # 格式质检脚本
+scripts/check_knowledge_cards.py    # 知识卡片去重与别名冲突检查
 ```
 
 ## 与 `nature-reader` 的区别
