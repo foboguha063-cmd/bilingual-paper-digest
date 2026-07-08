@@ -9,6 +9,8 @@ Use an atomic-note system inspired by Zettelkasten and Obsidian MOC practice:
 - One card explains one concept, method, material, statistic, disease, brain region, algorithm, or dataset.
 - Paper notes are the evidence trail. Knowledge cards are reusable concept nodes.
 - The bidirectional link must be explicit: the paper note links to the card, and the card links back to the paper note under `# **来源论文 / 应用场景**`.
+- One concept must have one canonical card. Different names, abbreviations, translations, spelling variants, and paper-specific wording must be recorded as aliases on the canonical card instead of becoming new cards.
+- Concepts with parent-child, part-whole, method-family, or subtype relationships must mark those relationships explicitly; do not flatten the knowledge base into unrelated cards.
 - Do not create cards for every noun. Create cards only for concepts that are central, repeated, reusable across papers, or necessary for understanding methods/results.
 
 ## Folder Taxonomy
@@ -31,6 +33,45 @@ Adapt to the target vault. A practical default is:
 
 If the existing vault already uses names such as `材料知识库`, preserve that naming. Do not rename the user's folders.
 
+## Identity, Deduplication, And Hierarchy
+
+Always run a preflight check before creating a card:
+
+1. Search the relevant knowledge folders for existing filenames, first-level headings, aliases, abbreviations, English full names, Chinese names, and common spelling variants.
+2. Normalize obvious variants before deciding: case, full-width/half-width punctuation, hyphens, plural forms, Greek-letter spellings, acronym/full-name pairs, and Chinese/English order.
+3. If the new term is the same concept as an existing card, update that existing card with a new source backlink and any missing alias. Do not create a second card.
+4. If a term has the same surface form but a different meaning, do not merge. Disambiguate with a domain qualifier, e.g. `ACC（前扣带皮层）` versus `ACC（乙酰辅酶A羧化酶）`.
+5. If two cards already duplicate the same concept, do not silently add a third card. Report the duplicate and update the most canonical existing card unless the user asks for a manual merge.
+
+Every newly created card should include a compact identity block when aliases or hierarchy matter:
+
+```markdown
+## **规范名 / 别名**
+- 规范名：
+- 别名 / 同义名：
+- 不合并：
+
+## **知识层级**
+- 所属领域：
+- 上级概念：
+- 下级概念：
+- 同级 / 相关概念：
+```
+
+Use these relationships consistently:
+
+- **上级概念**：broader method family, material class, disease category, brain system, algorithm family, or statistical model class.
+- **下级概念**：specific subtype, implementation, metric, assay, variant, or named model.
+- **同级 / 相关概念**：neighboring concepts that are not parent-child relations.
+- **不合并**：nearby names that look similar but must remain separate.
+
+Do not mix the knowledge-card system:
+
+- Keep one primary card location for each canonical concept. Use links for cross-domain relevance instead of duplicating the same card in multiple folders.
+- Choose the primary folder by the concept's role in the paper and by the vault's existing convention. For example, `LD score regression` belongs under statistics or genetic-statistical methods, not under the disease folder just because it was used in a disease paper.
+- Do not create both a broad parent card and many child cards unless the children are reusable across multiple papers or are technically necessary for understanding the results.
+- Link paper notes to the canonical card. When the paper uses an alias, use Obsidian alias display syntax: `[[Canonical Card|surface term in the paper]]`.
+
 ## Card Naming
 
 Use concise names that are stable in links:
@@ -48,6 +89,17 @@ Use this for most cards. Do not add YAML frontmatter unless the user asks for Ob
 
 ```markdown
 # 名称（Abbreviation / English）
+
+## **规范名 / 别名**
+- 规范名：
+- 别名 / 同义名：
+- 不合并：
+
+## **知识层级**
+- 所属领域：
+- 上级概念：
+- 下级概念：
+- 同级 / 相关概念：
 
 ## **定义**
 一句到三句说明它是什么。
@@ -87,6 +139,17 @@ For statistics cards, include enough context to prevent misuse:
 
 ```markdown
 # 方法名称（English name）
+
+## **规范名 / 别名**
+- 规范名：
+- 别名 / 同义名：
+- 不合并：
+
+## **知识层级**
+- 所属领域：统计方法
+- 上级概念：
+- 下级概念：
+- 同级 / 相关概念：
 
 ## **定义**
 说明该统计方法回答什么问题。
@@ -153,13 +216,16 @@ When producing the paper note:
 - Link a card on the first meaningful occurrence in a major section, not every occurrence.
 - Link only central reusable concepts.
 - Keep the English sentence readable. Prefer `poly(vinyl alcohol) ([[PVA]])` or `GWAS ([[GWAS]])` only when Obsidian mode is requested.
+- Link to canonical card titles, not transient aliases. If the source uses a different term, use `[[Canonical Card|source term]]`.
 - Do not create broken links for speculative cards unless the user explicitly asks for candidate links.
 
 When producing cards:
 
+- Search for an existing canonical card before writing a new file.
 - Always link back to the source paper note under `# **来源论文 / 应用场景**`.
 - If multiple papers use the same card, append new numbered entries instead of creating duplicate cards.
 - If a card already exists, update it conservatively and preserve user-written content.
+- If a concept fits multiple domains, keep one canonical card and add related links rather than copying the card into multiple folders.
 
 ## Candidate Selection
 
@@ -185,5 +251,6 @@ When the user asks for knowledge cards, deliver:
 1. The main bilingual paper note.
 2. A short list of created or suggested cards.
 3. The card files themselves if filesystem editing is requested or implied.
+4. A short note about merged aliases or skipped duplicates when relevant.
 
 When unsure whether to create files, provide a `# 知识卡片候选` section in the final chat response rather than editing the vault.
