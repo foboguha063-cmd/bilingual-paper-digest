@@ -27,7 +27,7 @@ Create a Markdown paper note for academic literature: bibliographic header, sent
 5. If writing into an Obsidian vault, follow `references/obsidian-vault-style.md` for folder choice, filename, wiki links, and attachment behavior.
 6. If the user asks for knowledge cards or bidirectional links, follow `references/knowledge-card-system.md`; before creating any card, scan existing card filenames, H1 titles, aliases, and related folders so aliases merge into existing canonical cards instead of creating duplicates.
 7. Preserve the source section flow for main text. Move all Box-style side content to the document end.
-8. Do not summarize instead of translating. Translate sentence by sentence while preserving the source paragraph boundaries and technical detail.
+8. Do not summarize, compress, paraphrase into review-style prose, or replace source sentences with extracted "main ideas". Translate sentence by sentence while preserving the source paragraph boundaries, argument order, qualifiers, numbers, and technical detail.
 
 ## Header Format
 
@@ -89,6 +89,28 @@ Keep headings from the source:
 
 For review papers, keep thematic headings such as `# The ACC within the nociceptive pathway`, `## Anatomy`, etc.
 
+## Fidelity And Completeness
+
+The body is a source-faithful bilingual rendering, not a digest summary. Use these constraints:
+
+- Preserve every substantive source sentence in the selected main text sections. Do not merge several source sentences into one English line or one Chinese summary.
+- Preserve the original paragraph order and local argument order. Do not move background, results, limitations, or mechanisms to make a smoother narrative.
+- Preserve hedging, scope, negation, contrast, causality, uncertainty, statistics, sample sizes, doses, time points, units, species, model names, and experimental conditions.
+- Do not replace a paragraph with phrases such as "the authors mainly state", "this section discusses", "in summary", "overall", "本文主要说明", "该段主要介绍", or "总结来说" unless that metacommentary appears in the source sentence itself.
+- Do not add analytic headings such as `研究背景`, `核心发现`, `机制总结`, or `临床意义` unless they are literal source headings. Keep source headings instead.
+- Do not infer conclusions, mechanisms, clinical meanings, or limitations beyond what the sentence states.
+- Do not convert ordinary prose into bullets, tables, or thematic summaries unless the source itself uses that structure.
+- If extraction order is uncertain or a paragraph is incomplete, inspect the rendered PDF/source page. Mark unresolved extraction uncertainty in the final chat response, not by inventing a summary inside the note.
+- If space or time prevents full processing, stop at the last fully translated source paragraph and report the remaining sections as unfinished. Never fill unfinished sections with summaries.
+
+Self-check after drafting each section:
+
+1. Compare the output against the extracted source text for that section.
+2. Confirm each retained English source sentence has exactly one immediate tab-indented Chinese translation.
+3. Confirm no source paragraph has been collapsed into a "main idea" sentence.
+4. Confirm numbers, citations, qualifiers, and negative statements have not been dropped.
+5. Rewrite any paragraph that reads like a Chinese explanation rather than a line-by-line translation.
+
 ## Citations
 
 Keep reference markers in the same location as the source text, not merely at the end of the sentence.
@@ -137,10 +159,11 @@ Preserve Box titles and translate the Box body in the same sentence-level origin
 ## Translation Style
 
 - Use formal academic Chinese.
+- Translate the source sentence; do not explain, interpret, or summarize it.
 - Translate for meaning while preserving hedging: `may`, `suggest`, `it is likely`, `has been shown`.
 - Preserve abbreviations and define them naturally where the original does: `anterior cingulate cortex (ACC)` -> `前扣带皮层（ACC）`.
 - Preserve gene/protein/receptor/channel names, formulas, units, Greek letters, and experimental terms.
-- Do not over-polish into a summary. Keep the source's evidence chain and paragraph sequence.
+- Do not over-polish into a summary or rewrite the prose into a smoother review paragraph. Keep the source's evidence chain and paragraph sequence.
 
 ## Final Check
 
@@ -156,6 +179,8 @@ Before responding:
 - Confirm each English sentence is followed immediately by its tab-indented Chinese translation.
 - Confirm sentence pairs from the same source paragraph are adjacent, with no extra blank lines between them.
 - Confirm there are clear blank lines or separators between source paragraphs.
+- Confirm no added summary sections, analytic headings, "main idea" sentences, or paragraph-level Chinese paraphrases have replaced source sentences.
+- Confirm dense results/methods sentences retain all numbers, units, sample sizes, conditions, statistical terms, and limitations from the original sentence.
 - If knowledge cards were created or updated, confirm each concept has one canonical card, alternate names are listed as aliases, parent/child relationships are marked, and cross-domain concepts are linked instead of duplicated across folders.
 - Run `scripts/check_digest.py` on the output when filesystem access is available, and fix any reported errors before finalizing.
 - Run `scripts/check_knowledge_cards.py` on created/updated knowledge cards or the target card root when filesystem access is available, and fix duplicate-title or alias-conflict findings before finalizing.
