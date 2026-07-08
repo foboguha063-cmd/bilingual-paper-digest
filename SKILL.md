@@ -12,16 +12,23 @@ Create a Markdown paper note for academic literature: bibliographic header, sent
 - Read `references/obsidian-vault-style.md` when the user mentions Obsidian, 文献库, vault paths, wiki links, figure folders, or asks to write the note into the local literature library.
 - Read `references/knowledge-card-system.md` when the user asks to extract terminology, named methods, statistical methods, materials, diseases, brain regions, algorithms, characterization methods, or reusable concepts as Obsidian knowledge cards.
 - Read `references/paper-type-routing.md` before handling unfamiliar disciplines or non-standard papers such as methods, resources, clinical studies, reviews, and conference papers.
+- Read `references/pdf-extraction-pipeline.md` before processing PDFs with complex layouts, scanned pages, books, or repeated/batch work.
+- Read `references/book-translation-mode.md` when the user asks to translate or organize a PDF book, monograph, textbook, dissertation, report, or long chapter-based document.
+- Read `references/translation-memory.md` when reducing token use, reusing previous translations, preserving terminology across runs, or resuming long documents.
+- Read `references/environment-and-sharing.md` when setting up this skill for a new machine, another user, or a shared GitHub installation.
 - Read `references/improvement-roadmap.md` when updating this skill or evaluating remaining gaps.
 - Use `examples/minimal-paper-note.md` as the compact text-only output model.
 - Use `examples/obsidian-material-note.md` as the Obsidian material-paper model with restrained wiki links.
+- Run `scripts/probe_tools.py` when environment capability is uncertain.
+- Run `scripts/extract_pdf_structure.py <paper.pdf>` before long, complex, scanned, or book-like PDF work so source text is captured once and reused from `.bilingual-paper-digest/source.jsonl`.
+- Run `scripts/build_translation_units.py <source.jsonl>` when sentence-level batching, cache reuse, or stricter source-output alignment is needed.
 - Run `scripts/check_digest.py <output.md>` after creating or revising a text-only note. Use `--allow-images` only when the user explicitly requests figure/media integration.
 - Run `scripts/check_knowledge_cards.py <card-files-or-card-root>` after creating or updating knowledge cards when filesystem access is available; use `--strict` for newly created card files.
 
 ## Core Workflow
 
 1. Read the source paper completely enough to identify title, authors, affiliations, journal, DOI, publication date, article type, sections, boxes, and references.
-2. If the source is a PDF, use PDF extraction tools. For two-column review PDFs, inspect extraction order and clean mixed columns, sidebars, headers, footers, author affiliations, figure captions, and references.
+2. If the source is a PDF, choose the extraction route first. For ordinary selectable PDFs, use available PDF text extraction; for complex or repeated work, run `scripts/extract_pdf_structure.py`; for scanned PDFs, OCR first; for books, follow `references/book-translation-mode.md`.
 3. Classify the paper type before writing the note. Use `references/paper-type-routing.md` if the structure is not a standard research article.
 4. Create or update one `.md` file in the user's working folder unless they specify another path.
 5. If writing into an Obsidian vault, follow `references/obsidian-vault-style.md` for folder choice, filename, wiki links, and attachment behavior.
@@ -181,6 +188,7 @@ Before responding:
 - Confirm there are clear blank lines or separators between source paragraphs.
 - Confirm no added summary sections, analytic headings, "main idea" sentences, or paragraph-level Chinese paraphrases have replaced source sentences.
 - Confirm dense results/methods sentences retain all numbers, units, sample sizes, conditions, statistical terms, and limitations from the original sentence.
+- For PDFs processed through the structured pipeline, confirm `.bilingual-paper-digest/source.jsonl` or `translation_units.jsonl` exists and that the Markdown was rendered from retained source sentences rather than directly from an untracked PDF impression.
 - If knowledge cards were created or updated, confirm each concept has one canonical card, alternate names are listed as aliases, parent/child relationships are marked, and cross-domain concepts are linked instead of duplicated across folders.
 - Run `scripts/check_digest.py` on the output when filesystem access is available, and fix any reported errors before finalizing.
 - Run `scripts/check_knowledge_cards.py` on created/updated knowledge cards or the target card root when filesystem access is available, and fix duplicate-title or alias-conflict findings before finalizing.
