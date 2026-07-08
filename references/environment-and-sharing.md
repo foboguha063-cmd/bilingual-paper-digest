@@ -1,0 +1,83 @@
+# Environment And Sharing
+
+Use this reference when installing the skill on a new machine, preparing it for another user, or diagnosing why PDF extraction quality differs between machines.
+
+## Installation Model
+
+Keep the skill portable:
+
+- Commit only scripts, references, examples, and small requirement files.
+- Do not commit `.venv/`, extracted PDF caches, OCR outputs, or translated work products.
+- Install optional runtime dependencies into a local `.venv/` or another user-controlled environment.
+- Treat heavy tools such as OCRmyPDF, Tesseract, Docling, and GROBID as optional capabilities, not required baseline dependencies.
+
+## Quick Start For Another User
+
+After cloning or copying the skill:
+
+```bash
+cd bilingual-paper-digest
+python3 scripts/setup_environment.py --profile light
+.venv/bin/python scripts/probe_tools.py
+```
+
+Then copy the skill into Codex:
+
+```bash
+mkdir -p ~/.codex/skills
+cp -R bilingual-paper-digest ~/.codex/skills/
+```
+
+Restart Codex and ask:
+
+```text
+使用 bilingual-paper-digest 整理这篇论文。
+```
+
+## Profiles
+
+- `light`: installs PyMuPDF, PyMuPDF4LLM, and tiktoken. Use this for ordinary papers, complex selectable PDFs, basic book extraction, and token planning.
+- `docling`: installs Docling. Use this for long books, reports, EPUB-like documents, and documents where layout conversion matters. This can be heavy.
+
+Run multiple profiles only when needed:
+
+```bash
+python3 scripts/setup_environment.py --profile light --profile docling
+```
+
+## Optional System Tools
+
+These are not installed by the skill because they depend on the operating system:
+
+- OCRmyPDF + Tesseract: required for scanned PDFs.
+- Poppler tools such as `pdfinfo` and `pdftotext`: useful for page count and fallback extraction.
+- Java + GROBID service: useful for scholarly metadata, references, authors, affiliations, and TEI output.
+
+Use `scripts/probe_tools.py` to inspect availability before deciding on a workflow.
+
+## User-Friendly Workflow
+
+For non-technical users, keep the workflow to three commands:
+
+```bash
+git clone <repo-url> bilingual-paper-digest
+cd bilingual-paper-digest
+python3 scripts/setup_environment.py --profile light
+```
+
+The user should not need to understand Docling, GROBID, OCRmyPDF, or tiktoken to use the default paper-note workflow. Those tools are routed internally by Codex through this skill's references and scripts.
+
+## Runtime Artifacts
+
+When processing a PDF, write temporary artifacts next to the source document:
+
+```text
+.bilingual-paper-digest/
+├── source.jsonl
+├── source_map.json
+├── translation_units.jsonl
+├── terminology_hits.json
+└── translation_cache.jsonl
+```
+
+These files let future runs resume without re-extracting the PDF or retranslating unchanged source units.
