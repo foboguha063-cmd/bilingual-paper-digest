@@ -10,8 +10,10 @@ This roadmap records improvements still worth making after comparing this skill 
 - Corresponding-author-only team line.
 - Obsidian-compatible reference for vault folder, wiki-link, and figure conventions.
 - Knowledge-card system for terminology, statistical methods, characterization methods, materials, and bidirectional Obsidian links.
+- Knowledge-card deduplication rules for canonical names, aliases, hierarchy, domain boundaries, and merge decisions.
 - Minimal examples for text-only and Obsidian-linked outputs.
 - `scripts/check_digest.py` for basic format QA.
+- `scripts/check_knowledge_cards.py` for duplicate-title and alias-conflict QA.
 
 ## High-Priority Improvements
 
@@ -51,7 +53,7 @@ This roadmap records improvements still worth making after comparing this skill 
    Define when supplementary methods/results should be appended, summarized, or omitted. Current behavior is conservative but not yet explicit enough for long supplement packages.
 
 10. **Terminology memory**
-    Add optional `references/terminology.md` or generated term tables per domain so repeated abbreviations, material names, and neuroscience terms remain consistent across papers.
+    Add optional generated term tables per domain so repeated abbreviations, material names, neuroscience terms, and card aliases remain consistent across papers. The table should point to canonical cards rather than replacing the card system.
 
 11. **Knowledge-card extraction helper**
     Add a script that proposes candidate cards from a finished paper note, grouped by term type: material, concept, characterization method, statistical method, disease/brain region, dataset, and algorithm.
