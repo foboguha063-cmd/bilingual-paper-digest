@@ -1,5 +1,16 @@
 # LD score regression
 
+## **规范名 / 别名**
+- 规范名：LD score regression
+- 别名 / 同义名：LDSC；LD-score regression；连锁不平衡评分回归
+- 不合并：linkage disequilibrium
+
+## **知识层级**
+- 所属领域：统计方法 / 遗传统计
+- 上级概念：[[GWAS summary statistics 方法]]
+- 下级概念：[[遗传相关性估计]]
+- 同级 / 相关概念：[[Mendelian randomization]]；[[PGS]]
+
 ## **定义**
 LD score regression 是一种利用 GWAS summary statistics 估计遗传相关性和区分多基因信号与群体结构混杂影响的统计方法。
 
