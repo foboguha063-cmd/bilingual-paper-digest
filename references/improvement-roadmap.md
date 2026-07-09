@@ -18,6 +18,7 @@ This roadmap records improvements still worth making after comparing this skill 
 - Structured PDF extraction scripts that create reusable `source.jsonl`, `source_map.json`, and `translation_units.jsonl` artifacts.
 - Translation cache and source-alignment scripts for resumable long-document workflows.
 - Root-router plus reference-module design for paper notes, book/chapter workflows, and Obsidian knowledge-card workflows.
+- Installable companion skills for `bilingual-paper-reader`, `bilingual-book-reader`, and `knowledge-base-curator`.
 - `scripts/check_digest.py` for basic format QA.
 - `scripts/check_knowledge_cards.py` for duplicate-title and alias-conflict QA.
 - `scripts/run_checks.py` plus GitHub Actions for repository-level reproducibility checks.
@@ -33,8 +34,8 @@ This roadmap records improvements still worth making after comparing this skill 
 3. **Paper-type regression examples**
    Add one small fixture each for review, methods/tool paper, clinical/population study, resource/dataset paper, and materials/device paper. Use them to keep the skill general beyond one field.
 
-4. **Companion skill packaging**
-   After more regression examples pass, optionally split the root router into installable companion skills: paper reader, book reader, and knowledge-base curator. Keep shared scripts in one place and avoid loading all references by default.
+4. **Companion skill forward tests**
+   Add small forward-test fixtures for each companion entry point so regressions show whether the paper, book, and knowledge-card prompts route to the expected shared references.
 
 5. **Checker expansion**
    Extend `check_digest.py` to detect:

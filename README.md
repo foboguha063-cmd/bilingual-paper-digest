@@ -4,12 +4,25 @@
 
 ## 安装
 
-推荐使用仓库自带安装脚本。它会把 skill 安装到 `$CODEX_HOME/skills` 或 `~/.codex/skills`，并自动排除 `.git`、`.venv`、PDF 抽取缓存等不应复制的文件：
+推荐使用仓库自带安装脚本。它会把主 skill 和三个可选窄入口安装到 `$CODEX_HOME/skills` 或 `~/.codex/skills`，并自动排除 `.git`、`.venv`、PDF 抽取缓存等不应复制的文件：
 
 ```bash
 git clone https://github.com/foboguha063-cmd/bilingual-paper-digest.git
 cd bilingual-paper-digest
 python3 scripts/install_skill.py
+```
+
+默认会同时安装：
+
+- `bilingual-paper-digest`：总路由入口
+- `bilingual-paper-reader`：论文双语阅读入口
+- `bilingual-book-reader`：PDF 书籍/章节双语阅读入口
+- `knowledge-base-curator`：Obsidian 知识卡片整理入口
+
+如果只想安装主入口：
+
+```bash
+python3 scripts/install_skill.py --no-companions
 ```
 
 如果希望同时安装轻量 PDF 处理环境：
@@ -47,7 +60,7 @@ python3 scripts/run_checks.py
 安装后重启 Codex，使用类似下面的自然语言触发：
 
 ```text
-按照 bilingual-paper-digest 整理这篇文献。
+使用 bilingual-paper-reader 整理这篇论文。
 ```
 
 ## 功能
@@ -87,6 +100,9 @@ python3 scripts/run_checks.py
 - 按照这个 Skill 整理这篇文献
 - 翻译并整理这本 PDF 书
 - 从这篇文献建立 Obsidian 知识卡片
+- 使用 bilingual-paper-reader 整理这篇论文
+- 使用 bilingual-book-reader 翻译这本 PDF 书的第 1 章
+- 使用 knowledge-base-curator 建立 Obsidian 知识卡片
 - trained bilingual Markdown paper notes
 
 给其他使用者时，可以只让他们使用这些最短提示：
@@ -96,11 +112,15 @@ python3 scripts/run_checks.py
 ```
 
 ```text
-使用 bilingual-paper-digest 翻译并整理这本 PDF 书的第 1 章。
+使用 bilingual-paper-reader 整理这篇论文。
 ```
 
 ```text
-使用 bilingual-paper-digest 从这篇文献中建立 Obsidian 知识卡片。
+使用 bilingual-book-reader 翻译并整理这本 PDF 书的第 1 章。
+```
+
+```text
+使用 knowledge-base-curator 从这篇文献中建立 Obsidian 知识卡片。
 ```
 
 ## 格式规则
@@ -113,6 +133,8 @@ python3 scripts/run_checks.py
 
 ```text
 references/obsidian-vault-style.md  # Obsidian 文献库规则
+references/source-faithful-bilingual-format.md # 严格双语原文对齐格式规则
+references/translation-fidelity-checklist.md # 忠实翻译、引用位置、Box 和终检清单
 references/knowledge-card-system.md # 术语/方法/统计知识卡片规则
 references/paper-type-routing.md    # 不同论文类型的整理策略
 references/pdf-extraction-pipeline.md # PDF 抽取与工具路由
@@ -135,6 +157,9 @@ scripts/translation_cache.py        # 翻译缓存复用、更新和统计
 scripts/check_source_alignment.py   # 结构化源文与 Markdown 对齐检查
 scripts/check_digest.py             # 格式质检脚本
 scripts/check_knowledge_cards.py    # 知识卡片去重与别名冲突检查
+companions/bilingual-paper-reader/  # 论文双语阅读窄入口
+companions/bilingual-book-reader/   # PDF 书籍/章节双语阅读窄入口
+companions/knowledge-base-curator/  # Obsidian 知识卡片窄入口
 ```
 
 ## 与 `nature-reader` 的区别

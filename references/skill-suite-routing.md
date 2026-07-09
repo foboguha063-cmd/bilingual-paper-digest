@@ -15,27 +15,27 @@ This mirrors the useful pattern in large academic suites: do not load every work
 
 ## Current Internal Modules
 
-| User intent | Root route | Primary checks |
-|---|---|---|
-| Sentence-level bilingual paper note | `references/paper-type-routing.md`, optionally `references/pdf-extraction-pipeline.md` | `scripts/check_digest.py`, optionally `scripts/check_source_alignment.py` |
-| PDF book, textbook, monograph, dissertation, or long report | `references/book-translation-mode.md`, `references/translation-memory.md` | `scripts/check_source_alignment.py`, cache statistics |
-| Obsidian literature note | `references/obsidian-vault-style.md` | link restraint, filename/folder convention |
-| Terminology, statistical method, or concept cards | `references/knowledge-card-system.md` | `scripts/check_knowledge_cards.py --strict` |
-| New user or shared installation | `references/environment-and-sharing.md` | `scripts/probe_tools.py` |
+| User intent | Companion entry | Shared route | Primary checks |
+|---|---|---|---|
+| Sentence-level bilingual paper note | `bilingual-paper-reader` | `references/source-faithful-bilingual-format.md`, `references/translation-fidelity-checklist.md`, `references/paper-type-routing.md`, optionally `references/pdf-extraction-pipeline.md` | `scripts/check_digest.py`, optionally `scripts/check_source_alignment.py` |
+| PDF book, textbook, monograph, dissertation, or long report | `bilingual-book-reader` | `references/source-faithful-bilingual-format.md`, `references/translation-fidelity-checklist.md`, `references/book-translation-mode.md`, `references/translation-memory.md` | `scripts/check_source_alignment.py`, cache statistics |
+| Obsidian literature note | `bilingual-paper-digest` | `references/obsidian-vault-style.md` | link restraint, filename/folder convention |
+| Terminology, statistical method, or concept cards | `knowledge-base-curator` | `references/knowledge-card-system.md` | `scripts/check_knowledge_cards.py --strict` |
+| New user or shared installation | `bilingual-paper-digest` | `references/environment-and-sharing.md` | `scripts/probe_tools.py`, `scripts/run_checks.py` |
 
-## Future Companion Skills
+## Installable Companion Skills
 
-Do not split until the root workflow is stable and examples cover the common cases. If splitting becomes useful, expose these as separate installable skill folders while sharing the same scripts and references:
+The repository includes three narrow companion skills under `companions/`. `scripts/install_skill.py` installs them by default as sibling skill folders. They keep invocation short while sharing the root skill's scripts and references.
 
 1. `bilingual-paper-reader`
    - Trigger: paper PDF/DOI/article into the trained sentence-level bilingual note.
    - Default: no figures, no standalone glossary, no summary-only output.
-   - Shared resources: paper routing, PDF extraction, translation memory, digest checker.
+   - Shared resources: source-faithful bilingual format, paper routing, PDF extraction, translation memory, digest checker.
 
 2. `bilingual-book-reader`
    - Trigger: PDF book, textbook, monograph, thesis, report, or chapter translation.
    - Default: chapter-by-chapter source map, cached translation units, progress manifest.
-   - Shared resources: book mode, PDF extraction, translation memory, source alignment checker.
+   - Shared resources: source-faithful bilingual format, book mode, PDF extraction, translation memory, source alignment checker.
 
 3. `knowledge-base-curator`
    - Trigger: extract terms, statistical methods, named methods, materials, diseases, brain regions, algorithms, or Obsidian cards.
@@ -47,15 +47,15 @@ Do not split until the root workflow is stable and examples cover the common cas
 Other users should not need to describe the full format every time. These short prompts should be enough after installation:
 
 ```text
-使用 bilingual-paper-digest 整理这篇论文。
+使用 bilingual-paper-reader 整理这篇论文。
 ```
 
 ```text
-使用 bilingual-paper-digest 翻译并整理这本 PDF 书的第 1 章。
+使用 bilingual-book-reader 翻译并整理这本 PDF 书的第 1 章。
 ```
 
 ```text
-使用 bilingual-paper-digest 从这篇文献中建立 Obsidian 知识卡片。
+使用 knowledge-base-curator 从这篇文献中建立 Obsidian 知识卡片。
 ```
 
 ```text
@@ -82,6 +82,7 @@ From full-paper reader skills:
 For another user to get comparable output:
 
 - Install with `scripts/install_skill.py`, not by manually selecting files.
+- Keep companion skills installed as siblings of `bilingual-paper-digest`; use `--no-companions` only for root-only testing.
 - Run `scripts/run_checks.py` before sharing an updated repository or asking another user to install it.
 - Run `scripts/probe_tools.py` after installing optional PDF dependencies.
 - For long PDFs or books, produce `source.jsonl` and `translation_units.jsonl` before translating.

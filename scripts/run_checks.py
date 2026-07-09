@@ -15,6 +15,11 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+COMPANION_SKILLS = (
+    "bilingual-paper-reader",
+    "bilingual-book-reader",
+    "knowledge-base-curator",
+)
 EXCLUDED_INSTALL_DIRS = {".git", ".venv", ".bilingual-paper-digest"}
 
 
@@ -27,15 +32,14 @@ def fail(message: str) -> None:
     raise SystemExit(f"ERROR: {message}")
 
 
-def check_skill_frontmatter() -> None:
-    skill = ROOT / "SKILL.md"
+def parse_frontmatter(skill: Path) -> tuple[dict[str, str], str]:
     text = skill.read_text(encoding="utf-8")
     if not text.startswith("---\n"):
-        fail("SKILL.md must start with YAML frontmatter")
+        fail(f"{skill.relative_to(ROOT)} must start with YAML frontmatter")
 
     parts = text.split("---\n", 2)
     if len(parts) < 3:
-        fail("SKILL.md frontmatter is not closed")
+        fail(f"{skill.relative_to(ROOT)} frontmatter is not closed")
 
     frontmatter = parts[1]
     values: dict[str, str] = {}
@@ -51,11 +55,24 @@ def check_skill_frontmatter() -> None:
         key, value = line.split(":", 1)
         current_key = key.strip()
         values[current_key] = value.strip()
+    return values, parts[2]
 
-    if values.get("name") != "bilingual-paper-digest":
-        fail("SKILL.md frontmatter name must be bilingual-paper-digest")
+
+def validate_skill_frontmatter(skill: Path, expected_name: str) -> None:
+    values, body = parse_frontmatter(skill)
+    display_path = skill.relative_to(ROOT)
+    if values.get("name") != expected_name:
+        fail(f"{display_path} frontmatter name must be {expected_name}")
     if not values.get("description"):
-        fail("SKILL.md frontmatter description is required")
+        fail(f"{display_path} frontmatter description is required")
+    if "[TODO" in body or "TODO:" in body:
+        fail(f"{display_path} still contains template TODO text")
+
+
+def check_skill_frontmatter() -> None:
+    validate_skill_frontmatter(ROOT / "SKILL.md", "bilingual-paper-digest")
+    for companion in COMPANION_SKILLS:
+        validate_skill_frontmatter(ROOT / "companions" / companion / "SKILL.md", companion)
 
 
 def referenced_paths(markdown: str) -> set[Path]:
@@ -66,7 +83,11 @@ def referenced_paths(markdown: str) -> set[Path]:
             continue
         token = content.split()[0]
         token = token.rstrip(".,;:")
-        if token.startswith(("references/", "examples/", "scripts/", "requirements-")):
+        if token.startswith("../bilingual-paper-digest/"):
+            token = token.removeprefix("../bilingual-paper-digest/")
+        if token == "SKILL.md" or token.startswith(
+            ("references/", "examples/", "scripts/", "companions/", "requirements-")
+        ):
             paths.add(ROOT / token)
     return paths
 
@@ -74,9 +95,24 @@ def referenced_paths(markdown: str) -> set[Path]:
 def check_referenced_resources() -> None:
     text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
     text += "\n" + (ROOT / "README.md").read_text(encoding="utf-8")
+    for companion in COMPANION_SKILLS:
+        text += "\n" + (ROOT / "companions" / companion / "SKILL.md").read_text(encoding="utf-8")
     missing = sorted(path.relative_to(ROOT) for path in referenced_paths(text) if not path.exists())
     if missing:
         fail("Referenced resources do not exist: " + ", ".join(map(str, missing)))
+
+
+def check_companion_metadata() -> None:
+    for companion in COMPANION_SKILLS:
+        skill_dir = ROOT / "companions" / companion
+        if not (skill_dir / "SKILL.md").exists():
+            fail(f"Companion missing SKILL.md: {companion}")
+        metadata = skill_dir / "agents" / "openai.yaml"
+        if not metadata.exists():
+            fail(f"Companion missing agents/openai.yaml: {companion}")
+        metadata_text = metadata.read_text(encoding="utf-8")
+        if f"${companion}" not in metadata_text:
+            fail(f"Companion openai.yaml default_prompt must mention ${companion}")
 
 
 def check_gitignore() -> None:
@@ -195,14 +231,24 @@ def smoke_installer() -> None:
         installed = codex_home / "skills" / "bilingual-paper-digest"
         if not (installed / "SKILL.md").exists():
             fail("install_skill.py did not install SKILL.md")
+        if not (installed / "companions" / "bilingual-paper-reader" / "SKILL.md").exists():
+            fail("install_skill.py did not retain companion source files in the root skill")
         for excluded in EXCLUDED_INSTALL_DIRS:
             if (installed / excluded).exists():
                 fail(f"install_skill.py copied excluded runtime directory: {excluded}")
+        for companion in COMPANION_SKILLS:
+            companion_dir = codex_home / "skills" / companion
+            if not (companion_dir / "SKILL.md").exists():
+                fail(f"install_skill.py did not install companion: {companion}")
+            sibling_root = companion_dir.parent / "bilingual-paper-digest" / "SKILL.md"
+            if not sibling_root.exists():
+                fail(f"Installed companion cannot find sibling root skill: {companion}")
 
 
 def main() -> int:
     check_skill_frontmatter()
     check_referenced_resources()
+    check_companion_metadata()
     check_gitignore()
     check_scripts_compile()
     run([sys.executable, "scripts/check_digest.py", "examples/minimal-paper-note.md", "examples/obsidian-material-note.md"])

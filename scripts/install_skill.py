@@ -13,6 +13,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_NAME = "bilingual-paper-digest"
+COMPANION_ROOT = ROOT / "companions"
+COMPANION_SKILLS = (
+    "bilingual-paper-reader",
+    "bilingual-book-reader",
+    "knowledge-base-curator",
+)
 EXCLUDE_NAMES = {
     ".DS_Store",
     ".git",
@@ -69,6 +75,18 @@ def setup_environment(destination: Path, profiles: list[str]) -> None:
     subprocess.check_call(command)
 
 
+def install_companions(skills_dir: Path, clean: bool) -> list[Path]:
+    installed: list[Path] = []
+    for companion in COMPANION_SKILLS:
+        source = COMPANION_ROOT / companion
+        if not source.exists():
+            raise SystemExit(f"Companion skill missing: {source}")
+        destination = skills_dir / companion
+        copy_skill(source, destination, clean)
+        installed.append(destination)
+    return installed
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -90,11 +108,21 @@ def main() -> int:
         default=[],
         help="Also create the optional runtime in the installed skill. Repeat for multiple profiles.",
     )
+    parser.add_argument(
+        "--no-companions",
+        action="store_true",
+        help="Install only the root bilingual-paper-digest skill, without companion entry-point skills.",
+    )
     args = parser.parse_args()
 
     codex_home = args.codex_home.expanduser().resolve()
-    destination = codex_home / "skills" / args.name
-    destination.parent.mkdir(parents=True, exist_ok=True)
+    skills_dir = codex_home / "skills"
+    destination = skills_dir / args.name
+    skills_dir.mkdir(parents=True, exist_ok=True)
+
+    install_shared_companions = not args.no_companions and args.name == DEFAULT_NAME
+    if not args.no_companions and args.name != DEFAULT_NAME:
+        print("Skipping companion skills because --name changes the expected sibling root folder.")
 
     if destination.resolve() == ROOT.resolve():
         if args.clean:
@@ -105,8 +133,14 @@ def main() -> int:
 
     setup_environment(destination, list(dict.fromkeys(args.with_env)))
 
+    companion_destinations = []
+    if install_shared_companions:
+        companion_destinations = install_companions(skills_dir, args.clean)
+
     print(f"Installed skill: {destination}")
-    print("Restart Codex, then ask: 使用 bilingual-paper-digest 整理这篇文献。")
+    for companion_destination in companion_destinations:
+        print(f"Installed companion: {companion_destination}")
+    print("Restart Codex, then ask: 使用 bilingual-paper-reader 整理这篇论文。")
     return 0
 
 

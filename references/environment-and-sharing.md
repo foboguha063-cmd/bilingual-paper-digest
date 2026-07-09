@@ -21,11 +21,13 @@ cd bilingual-paper-digest
 python3 scripts/install_skill.py --with-env light
 ```
 
-Restart Codex and ask:
+This installs the root `bilingual-paper-digest` skill plus the companion entry-point skills `bilingual-paper-reader`, `bilingual-book-reader`, and `knowledge-base-curator`. Restart Codex and ask:
 
 ```text
-使用 bilingual-paper-digest 整理这篇论文。
+使用 bilingual-paper-reader 整理这篇论文。
 ```
+
+The root `SKILL.md` is intentionally short. Detailed output rules live in `references/source-faithful-bilingual-format.md` and `references/translation-fidelity-checklist.md`, so ordinary routing loads fewer tokens while paper/book tasks still get the strict bilingual formatting contract.
 
 If the user wants to inspect environment capability in the installed copy:
 
@@ -73,7 +75,13 @@ cd bilingual-paper-digest
 python3 scripts/install_skill.py --with-env light
 ```
 
-The user should not need to understand Docling, GROBID, OCRmyPDF, or tiktoken to use the default paper-note workflow. Those tools are routed internally by Codex through this skill's references and scripts.
+The user should not need to understand Docling, GROBID, OCRmyPDF, tiktoken, or the internal root-router design to use the default paper-note workflow. They can invoke the narrow companion skill that matches the task.
+
+Use root-only installation only for debugging:
+
+```bash
+python3 scripts/install_skill.py --no-companions
+```
 
 For updates after a repository pull, run:
 
