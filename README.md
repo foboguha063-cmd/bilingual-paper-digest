@@ -38,6 +38,12 @@ python3 scripts/setup_environment.py --profile light
 python3 scripts/probe_tools.py
 ```
 
+若要验证仓库本身、示例、缓存/对齐脚本和安装脚本：
+
+```bash
+python3 scripts/run_checks.py
+```
+
 安装后重启 Codex，使用类似下面的自然语言触发：
 
 ```text
@@ -121,6 +127,7 @@ examples/knowledge-card-term.md     # 专有名词知识卡样例
 examples/knowledge-card-statistics.md # 统计方法知识卡样例
 scripts/setup_environment.py        # 创建轻量可选运行环境
 scripts/install_skill.py            # 安装/更新到本机 Codex skills 目录
+scripts/run_checks.py               # 仓库、示例、缓存/对齐和安装脚本自检
 scripts/probe_tools.py              # 检测 PDF/OCR/书籍模式可用能力
 scripts/extract_pdf_structure.py    # PDF -> source.jsonl/source_map.json
 scripts/build_translation_units.py  # source.jsonl -> translation_units.jsonl

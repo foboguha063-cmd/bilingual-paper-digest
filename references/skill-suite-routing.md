@@ -82,6 +82,7 @@ From full-paper reader skills:
 For another user to get comparable output:
 
 - Install with `scripts/install_skill.py`, not by manually selecting files.
+- Run `scripts/run_checks.py` before sharing an updated repository or asking another user to install it.
 - Run `scripts/probe_tools.py` after installing optional PDF dependencies.
 - For long PDFs or books, produce `source.jsonl` and `translation_units.jsonl` before translating.
 - Use `translation_cache.jsonl` only for checked translations from the same source sentence hash.

@@ -84,6 +84,14 @@ python3 scripts/install_skill.py --clean
 
 Use `--with-env light` again only if the installed environment is missing or stale.
 
+Before sharing a changed version, run:
+
+```bash
+python3 scripts/run_checks.py
+```
+
+This check is intentionally standard-library only. It validates the skill metadata, referenced resources, examples, knowledge cards, translation cache behavior, source-alignment behavior, and installer behavior without requiring PDF libraries.
+
 ## Runtime Artifacts
 
 When processing a PDF, write temporary artifacts next to the source document:

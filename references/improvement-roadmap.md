@@ -20,6 +20,7 @@ This roadmap records improvements still worth making after comparing this skill 
 - Root-router plus reference-module design for paper notes, book/chapter workflows, and Obsidian knowledge-card workflows.
 - `scripts/check_digest.py` for basic format QA.
 - `scripts/check_knowledge_cards.py` for duplicate-title and alias-conflict QA.
+- `scripts/run_checks.py` plus GitHub Actions for repository-level reproducibility checks.
 
 ## High-Priority Improvements
 
@@ -72,9 +73,6 @@ This roadmap records improvements still worth making after comparing this skill 
 
 13. **HTML preview**
     Provide an optional browser preview only as a secondary artifact. The Markdown file should remain primary.
-
-14. **GitHub CI**
-    Add a lightweight CI workflow to run `quick_validate.py` and `check_digest.py` on examples whenever the repository changes.
 
 ## Design Constraints
 

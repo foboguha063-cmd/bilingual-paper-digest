@@ -1,0 +1,225 @@
+#!/usr/bin/env python3
+"""Run repository-level checks for bilingual-paper-digest."""
+
+from __future__ import annotations
+
+import json
+import py_compile
+import re
+import shlex
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+EXCLUDED_INSTALL_DIRS = {".git", ".venv", ".bilingual-paper-digest"}
+
+
+def run(command: list[str]) -> None:
+    print("+ " + shlex.join(command))
+    subprocess.run(command, cwd=ROOT, check=True)
+
+
+def fail(message: str) -> None:
+    raise SystemExit(f"ERROR: {message}")
+
+
+def check_skill_frontmatter() -> None:
+    skill = ROOT / "SKILL.md"
+    text = skill.read_text(encoding="utf-8")
+    if not text.startswith("---\n"):
+        fail("SKILL.md must start with YAML frontmatter")
+
+    parts = text.split("---\n", 2)
+    if len(parts) < 3:
+        fail("SKILL.md frontmatter is not closed")
+
+    frontmatter = parts[1]
+    values: dict[str, str] = {}
+    current_key = ""
+    for line in frontmatter.splitlines():
+        if not line.strip():
+            continue
+        if line.startswith((" ", "\t")) and current_key:
+            values[current_key] += " " + line.strip()
+            continue
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        current_key = key.strip()
+        values[current_key] = value.strip()
+
+    if values.get("name") != "bilingual-paper-digest":
+        fail("SKILL.md frontmatter name must be bilingual-paper-digest")
+    if not values.get("description"):
+        fail("SKILL.md frontmatter description is required")
+
+
+def referenced_paths(markdown: str) -> set[Path]:
+    paths: set[Path] = set()
+    for match in re.finditer(r"`([^`]+)`", markdown):
+        content = match.group(1).strip()
+        if not content:
+            continue
+        token = content.split()[0]
+        token = token.rstrip(".,;:")
+        if token.startswith(("references/", "examples/", "scripts/", "requirements-")):
+            paths.add(ROOT / token)
+    return paths
+
+
+def check_referenced_resources() -> None:
+    text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+    text += "\n" + (ROOT / "README.md").read_text(encoding="utf-8")
+    missing = sorted(path.relative_to(ROOT) for path in referenced_paths(text) if not path.exists())
+    if missing:
+        fail("Referenced resources do not exist: " + ", ".join(map(str, missing)))
+
+
+def check_gitignore() -> None:
+    gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
+    for pattern in (".venv/", ".bilingual-paper-digest/", "translation_cache.jsonl"):
+        if pattern not in gitignore:
+            fail(f".gitignore missing runtime artifact pattern: {pattern}")
+
+
+def check_scripts_compile() -> None:
+    for script in sorted((ROOT / "scripts").glob("*.py")):
+        print(f"py_compile {script.relative_to(ROOT)}")
+        py_compile.compile(str(script), doraise=True)
+
+
+def smoke_translation_cache_and_alignment() -> None:
+    with tempfile.TemporaryDirectory(prefix="bpd-check-") as tmp:
+        tmp_path = Path(tmp)
+        units_path = tmp_path / "units.jsonl"
+        cache_path = tmp_path / "translation_cache.jsonl"
+        cached_path = tmp_path / "units.cached.jsonl"
+        updated_cache_path = tmp_path / "translation_cache.updated.jsonl"
+        note_path = tmp_path / "note.md"
+
+        units = [
+            {
+                "translation_unit_id": "U0001",
+                "page": 1,
+                "source_hash": "hash-1",
+                "source_sentence": "Leaf-inspired eutectic skins show robust wet adhesion [1].",
+                "translation": "",
+                "status": "pending",
+            },
+            {
+                "translation_unit_id": "U0002",
+                "page": 1,
+                "source_hash": "hash-2",
+                "source_sentence": "They maintain fatigue resistance under repeated deformation.",
+                "translation": "它们在重复变形下保持抗疲劳性。",
+                "status": "checked",
+            },
+        ]
+        cache = [
+            {
+                "source_hash": "hash-1",
+                "source_sentence": units[0]["source_sentence"],
+                "translation": "叶启发的共晶皮肤表现出稳健的湿态黏附性[1]。",
+                "status": "checked",
+            }
+        ]
+
+        for path, records in ((units_path, units), (cache_path, cache)):
+            with path.open("w", encoding="utf-8") as handle:
+                for record in records:
+                    handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+        note_path.write_text(
+            "\n".join(
+                [
+                    "Leaf-inspired eutectic skins show robust wet adhesion [1].",
+                    "\t叶启发的共晶皮肤表现出稳健的湿态黏附性[1]。",
+                    "- They maintain fatigue resistance under repeated deformation.",
+                    "\t它们在重复变形下保持抗疲劳性。",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+
+        run(
+            [
+                sys.executable,
+                "scripts/translation_cache.py",
+                "apply",
+                "--units",
+                str(units_path),
+                "--cache",
+                str(cache_path),
+                "--out",
+                str(cached_path),
+            ]
+        )
+        cached_records = [json.loads(line) for line in cached_path.read_text(encoding="utf-8").splitlines()]
+        if not cached_records[0].get("translation"):
+            fail("translation_cache.py apply did not fill cached translation")
+
+        run(
+            [
+                sys.executable,
+                "scripts/translation_cache.py",
+                "update",
+                "--units",
+                str(cached_path),
+                "--cache",
+                str(updated_cache_path),
+            ]
+        )
+        run(
+            [
+                sys.executable,
+                "scripts/check_source_alignment.py",
+                "--units",
+                str(units_path),
+                "--markdown",
+                str(note_path),
+                "--statuses",
+                "pending,checked",
+            ]
+        )
+
+
+def smoke_installer() -> None:
+    with tempfile.TemporaryDirectory(prefix="bpd-install-") as tmp:
+        codex_home = Path(tmp)
+        run([sys.executable, "scripts/install_skill.py", "--codex-home", str(codex_home), "--clean"])
+        installed = codex_home / "skills" / "bilingual-paper-digest"
+        if not (installed / "SKILL.md").exists():
+            fail("install_skill.py did not install SKILL.md")
+        for excluded in EXCLUDED_INSTALL_DIRS:
+            if (installed / excluded).exists():
+                fail(f"install_skill.py copied excluded runtime directory: {excluded}")
+
+
+def main() -> int:
+    check_skill_frontmatter()
+    check_referenced_resources()
+    check_gitignore()
+    check_scripts_compile()
+    run([sys.executable, "scripts/check_digest.py", "examples/minimal-paper-note.md", "examples/obsidian-material-note.md"])
+    run(
+        [
+            sys.executable,
+            "scripts/check_knowledge_cards.py",
+            "--strict",
+            "examples/knowledge-card-term.md",
+            "examples/knowledge-card-statistics.md",
+        ]
+    )
+    smoke_translation_cache_and_alignment()
+    smoke_installer()
+    print("All checks passed.")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

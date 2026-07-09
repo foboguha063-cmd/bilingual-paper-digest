@@ -26,6 +26,7 @@ Create a Markdown academic reading note: bibliographic header, sentence-level En
 - Run `scripts/translation_cache.py apply/update/stats` when resuming long translations or avoiding repeated token use for unchanged source sentences.
 - Run `scripts/check_source_alignment.py --units <translation_units.jsonl> --markdown <output.md>` when the Markdown should be proven against structured source units.
 - Run `scripts/install_skill.py` when installing this repository into another user's local Codex skills directory.
+- Run `scripts/run_checks.py` after changing the skill, scripts, examples, or shared installation behavior.
 - Run `scripts/check_digest.py <output.md>` after creating or revising a text-only note. Use `--allow-images` only when the user explicitly requests figure/media integration.
 - Run `scripts/check_knowledge_cards.py <card-files-or-card-root>` after creating or updating knowledge cards when filesystem access is available; use `--strict` for newly created card files.
 
