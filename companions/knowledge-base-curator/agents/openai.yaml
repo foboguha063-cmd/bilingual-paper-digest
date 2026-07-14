@@ -1,4 +1,4 @@
 interface:
   display_name: "Knowledge Base Curator"
   short_description: "Build deduplicated Obsidian knowledge cards"
-  default_prompt: "Use $knowledge-base-curator to extract reusable Obsidian knowledge cards from this paper."
+  default_prompt: "Use $knowledge-base-curator to create or update canonical Obsidian knowledge cards from this source."

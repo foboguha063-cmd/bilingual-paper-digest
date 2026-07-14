@@ -52,7 +52,7 @@ Chapter：
 Page range：
 ```
 
-Then use the same sentence-level English followed by tab-indented Chinese format for translated prose.
+Then follow `references/bilingual-output-contract.md` for translated prose.
 
 ## Resumability
 

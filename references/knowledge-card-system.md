@@ -246,11 +246,13 @@ Do not create cards for:
 
 ## Output Modes
 
-When the user asks for knowledge cards, deliver:
+For a cards-only request, deliver only the relevant cards and a compact change report. Do not create a bilingual paper note unless the user also requests one.
+
+For a combined paper-note and knowledge-card request, deliver:
 
 1. The main bilingual paper note.
 2. A short list of created or suggested cards.
 3. The card files themselves if filesystem editing is requested or implied.
 4. A short note about merged aliases or skipped duplicates when relevant.
 
-When unsure whether to create files, provide a `# 知识卡片候选` section in the final chat response rather than editing the vault.
+When filesystem editing is not authorized or the target vault is unavailable, provide card candidates in the final response instead of editing files.

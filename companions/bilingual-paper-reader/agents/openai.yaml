@@ -1,4 +1,4 @@
 interface:
   display_name: "Bilingual Paper Reader"
-  short_description: "Read papers in bilingual note format"
-  default_prompt: "Use $bilingual-paper-reader to turn this paper into the trained source-faithful bilingual Markdown note."
+  short_description: "Create source-faithful bilingual paper notes"
+  default_prompt: "Use $bilingual-paper-reader to turn this paper into a source-faithful sentence-level bilingual Markdown note."

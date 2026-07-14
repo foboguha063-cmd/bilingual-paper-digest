@@ -1,4 +1,4 @@
 interface:
   display_name: "Bilingual Book Reader"
-  short_description: "Translate PDF books chapter by chapter"
-  default_prompt: "Use $bilingual-book-reader to translate this PDF book chapter into source-faithful bilingual Markdown."
+  short_description: "Translate long documents chapter by chapter"
+  default_prompt: "Use $bilingual-book-reader to translate this book chapter into resumable source-faithful bilingual Markdown."

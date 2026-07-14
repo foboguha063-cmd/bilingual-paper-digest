@@ -20,7 +20,24 @@ COMPANION_SKILLS = (
     "bilingual-book-reader",
     "knowledge-base-curator",
 )
-EXCLUDED_INSTALL_DIRS = {".git", ".venv", ".bilingual-paper-digest"}
+EXPECTED_ROOT_RUNTIME = {
+    "SKILL.md",
+    "agents",
+    "references",
+    "requirements-docling.txt",
+    "requirements-light.txt",
+    "scripts",
+}
+EXCLUDED_INSTALL_ENTRIES = {
+    ".git",
+    ".github",
+    ".gitignore",
+    ".bilingual-paper-digest",
+    "README.md",
+    "companions",
+    "examples",
+}
+EXCLUDED_INSTALL_SCRIPTS = {"install_skill.py", "run_checks.py"}
 
 
 def run(command: list[str]) -> None:
@@ -65,8 +82,13 @@ def validate_skill_frontmatter(skill: Path, expected_name: str) -> None:
         fail(f"{display_path} frontmatter name must be {expected_name}")
     if not values.get("description"):
         fail(f"{display_path} frontmatter description is required")
+    extra_keys = sorted(set(values) - {"name", "description"})
+    if extra_keys:
+        fail(f"{display_path} has unsupported frontmatter keys: {', '.join(extra_keys)}")
     if "[TODO" in body or "TODO:" in body:
         fail(f"{display_path} still contains template TODO text")
+    if len(body.splitlines()) > 500:
+        fail(f"{display_path} body exceeds 500 lines")
 
 
 def check_skill_frontmatter() -> None:
@@ -95,6 +117,8 @@ def referenced_paths(markdown: str) -> set[Path]:
 def check_referenced_resources() -> None:
     text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
     text += "\n" + (ROOT / "README.md").read_text(encoding="utf-8")
+    for reference in sorted((ROOT / "references").glob("*.md")):
+        text += "\n" + reference.read_text(encoding="utf-8")
     for companion in COMPANION_SKILLS:
         text += "\n" + (ROOT / "companions" / companion / "SKILL.md").read_text(encoding="utf-8")
     missing = sorted(path.relative_to(ROOT) for path in referenced_paths(text) if not path.exists())
@@ -103,6 +127,9 @@ def check_referenced_resources() -> None:
 
 
 def check_companion_metadata() -> None:
+    root_metadata = (ROOT / "agents" / "openai.yaml").read_text(encoding="utf-8")
+    if "$bilingual-paper-digest" not in root_metadata:
+        fail("Root openai.yaml default_prompt must mention $bilingual-paper-digest")
     for companion in COMPANION_SKILLS:
         skill_dir = ROOT / "companions" / companion
         if not (skill_dir / "SKILL.md").exists():
@@ -231,18 +258,36 @@ def smoke_installer() -> None:
         installed = codex_home / "skills" / "bilingual-paper-digest"
         if not (installed / "SKILL.md").exists():
             fail("install_skill.py did not install SKILL.md")
-        if not (installed / "companions" / "bilingual-paper-reader" / "SKILL.md").exists():
-            fail("install_skill.py did not retain companion source files in the root skill")
-        for excluded in EXCLUDED_INSTALL_DIRS:
+        installed_entries = {path.name for path in installed.iterdir()}
+        if installed_entries != EXPECTED_ROOT_RUNTIME:
+            fail(f"Unexpected installed root entries: {sorted(installed_entries)}")
+        for excluded in EXCLUDED_INSTALL_ENTRIES:
             if (installed / excluded).exists():
-                fail(f"install_skill.py copied excluded runtime directory: {excluded}")
+                fail(f"install_skill.py copied repository-only entry: {excluded}")
+        for excluded in EXCLUDED_INSTALL_SCRIPTS:
+            if (installed / "scripts" / excluded).exists():
+                fail(f"install_skill.py copied repository-only script: {excluded}")
         for companion in COMPANION_SKILLS:
             companion_dir = codex_home / "skills" / companion
             if not (companion_dir / "SKILL.md").exists():
                 fail(f"install_skill.py did not install companion: {companion}")
+            companion_entries = {path.name for path in companion_dir.iterdir()}
+            if companion_entries != {"SKILL.md", "agents"}:
+                fail(f"Unexpected installed companion entries for {companion}: {sorted(companion_entries)}")
             sibling_root = companion_dir.parent / "bilingual-paper-digest" / "SKILL.md"
             if not sibling_root.exists():
                 fail(f"Installed companion cannot find sibling root skill: {companion}")
+
+        preserved = installed / ".venv" / "preserved.txt"
+        preserved.parent.mkdir()
+        preserved.write_text("keep", encoding="utf-8")
+        (installed / "README.md").write_text("stale", encoding="utf-8")
+        (installed / "references" / "stale.md").write_text("stale", encoding="utf-8")
+        run([sys.executable, "scripts/install_skill.py", "--codex-home", str(codex_home)])
+        if not preserved.exists():
+            fail("Normal installer update removed the optional .venv")
+        if (installed / "README.md").exists() or (installed / "references" / "stale.md").exists():
+            fail("Normal installer update did not remove stale repository-owned files")
 
 
 def main() -> int:

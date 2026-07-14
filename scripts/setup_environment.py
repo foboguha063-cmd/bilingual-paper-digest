@@ -35,7 +35,7 @@ def main() -> int:
         "--profile",
         choices=sorted(PROFILE_FILES),
         action="append",
-        default=["light"],
+        default=[],
         help="Dependency profile to install. Repeat for multiple profiles.",
     )
     parser.add_argument("--python", default=sys.executable, help="Python executable used to create the venv.")
@@ -43,7 +43,7 @@ def main() -> int:
     args = parser.parse_args()
 
     venv_dir = args.venv.resolve()
-    profiles = list(dict.fromkeys(args.profile))
+    profiles = list(dict.fromkeys(args.profile or ["light"]))
 
     if not venv_dir.exists():
         print(f"Creating venv: {venv_dir}")

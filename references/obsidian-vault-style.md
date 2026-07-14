@@ -92,7 +92,7 @@ If a paper introduces a recurring material/concept that does not yet exist in `æ
 
 Do not create separate knowledge-base notes unless explicitly requested.
 
-For knowledge-card creation, use `knowledge-card-system.md`. The paper note should only contain restrained links, while the card contains definition, method logic, boundaries, and source-paper backlinks.
+For knowledge-card creation, use `references/knowledge-card-system.md`. The paper note should only contain restrained links, while the card contains definition, method logic, boundaries, and source-paper backlinks.
 
 ## Images And Media
 

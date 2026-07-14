@@ -5,25 +5,14 @@ description: Create source-faithful sentence-level Chinese-English Markdown read
 
 # Bilingual Paper Reader
 
-Use this companion skill as the narrow entry point for ordinary academic papers. It shares the installed sibling root skill at `../bilingual-paper-digest`; if that folder is missing, ask the user to install the repository with `scripts/install_skill.py`.
-
-## Shared Resources
-
-- Read `../bilingual-paper-digest/SKILL.md` for root routing and shared workflow rules.
-- Read `../bilingual-paper-digest/references/source-faithful-bilingual-format.md` for the required header, team-line, sentence-pair, citation, omission, Box, and final-check rules.
-- Read `../bilingual-paper-digest/references/translation-fidelity-checklist.md` for source-faithfulness, citation placement, omission rules, Box relocation, and final self-check constraints.
-- Read `../bilingual-paper-digest/references/paper-type-routing.md` before writing a note for reviews, methods/tool papers, clinical studies, resource/data papers, conference papers, or unfamiliar disciplines.
-- Read `../bilingual-paper-digest/references/pdf-extraction-pipeline.md` before processing PDFs with complex layouts, scanned pages, poor extraction, or repeated/batch work.
-- Read `../bilingual-paper-digest/references/translation-memory.md` when resuming a long paper or reusing checked translations.
-- Run `../bilingual-paper-digest/scripts/check_digest.py <output.md>` after drafting when filesystem access is available.
-- Run `../bilingual-paper-digest/scripts/check_source_alignment.py` when the paper was processed through translation units.
+Use the installed sibling `../bilingual-paper-digest` as the shared runtime. If it is missing, stop and ask the user to install the root skill.
 
 ## Workflow
 
-1. Treat the task as a paper note, not a book translation or knowledge-card extraction, unless the user explicitly asks for those additional outputs.
-2. Extract enough source metadata to fill the trained header and identify corresponding authors.
-3. Preserve the paper's section flow and translate sentence by sentence from the source text.
-4. Keep original paragraph boundaries: no blank lines inside one source paragraph; clear blank spacing between source paragraphs.
-5. Do not include figures, tables, standalone glossary, full references, or a separate 题录简介 unless the user asks.
-6. Move Box-style side content to the end of the note.
-7. Stop at the last fully translated paragraph if the paper cannot be completed in one pass; report unfinished sections in the final chat response instead of summarizing them inside the note.
+1. Read `../bilingual-paper-digest/references/bilingual-output-contract.md` before writing.
+2. Read `../bilingual-paper-digest/references/paper-type-routing.md` for reviews, methods, clinical, resource, conference, or unfamiliar paper structures.
+3. Read `../bilingual-paper-digest/references/pdf-extraction-pipeline.md` only for complex, scanned, long, or resumable PDFs; read `../bilingual-paper-digest/references/translation-memory.md` only when continuing or reusing checked units.
+4. Extract the metadata and source structure required by the output contract, then translate retained prose sentence by sentence in source order.
+5. Write one Markdown note. Do not add figures, tables, a glossary, full references, knowledge cards, or a separate `题录简介` unless requested.
+6. Run `../bilingual-paper-digest/scripts/check_digest.py <output.md>`. When structured units exist, also run `../bilingual-paper-digest/scripts/check_source_alignment.py`.
+7. Fix validation errors and report any unfinished section or unresolved extraction risk without inserting a summary into the note.
