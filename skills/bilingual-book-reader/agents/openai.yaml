@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bilingual Book Reader"
+  short_description: "Translate long academic documents with resume"
+  default_prompt: "Use $bilingual-book-reader to translate this selected book scope into resumable source-aligned English-Chinese Markdown."

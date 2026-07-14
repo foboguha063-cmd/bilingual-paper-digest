@@ -1,0 +1,5 @@
+{"prompt":"整理这篇普通英文研究论文，保留逐句原文并给出中文翻译。","expected_skill":"bilingual-paper-reader","must_preserve":["source sentences","numbers","citations","paragraph order"]}
+{"prompt":"继续翻译这本PDF书的第三章，从上次停止的位置开始。","expected_skill":"bilingual-book-reader","must_preserve":["scope","stable unit IDs","complete paragraphs","resume state"]}
+{"prompt":"从这篇文献建立统计方法知识卡片，并合并已有别名。","expected_skill":"knowledge-base-curator","must_preserve":["user content","canonical identity","backlinks"]}
+{"prompt":"审计这份双语笔记是否漏译，并把核心术语加入现有知识卡片。","expected_skill":"bilingual-paper-digest","must_preserve":["source alignment","separate note and cards"]}
+{"prompt":"只用三句话总结这篇论文，不需要原文对照。","expected_skill":null,"must_preserve":["summary-only scope"]}

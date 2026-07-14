@@ -1,4 +1,0 @@
-interface:
-  display_name: "Bilingual Paper Digest"
-  short_description: "Route bilingual academic notes, books, and cards"
-  default_prompt: "Use $bilingual-paper-digest to route this academic source into the appropriate bilingual note, book, or knowledge-card workflow."

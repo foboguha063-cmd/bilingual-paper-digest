@@ -1,0 +1,4 @@
+interface:
+  display_name: "Knowledge Base Curator"
+  short_description: "Curate canonical linked research knowledge cards"
+  default_prompt: "Use $knowledge-base-curator to build or update canonical linked knowledge cards from these academic sources."
