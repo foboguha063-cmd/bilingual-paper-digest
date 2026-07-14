@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bilingual Paper Reader"
+  short_description: "Build source-aligned bilingual paper readers"
+  default_prompt: "Use $bilingual-paper-reader to turn this paper into a complete source-aligned English-Chinese Markdown reader and validate it."

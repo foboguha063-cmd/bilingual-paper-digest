@@ -1,48 +1,49 @@
 #!/usr/bin/env python3
-"""Run repository-level checks for bilingual-paper-digest."""
+"""Run deterministic repository and end-to-end checks."""
 
 from __future__ import annotations
 
+import importlib.util
 import json
-import py_compile
 import re
+import runpy
 import shlex
-import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[1]
-COMPANION_SKILLS = (
+REPO = Path(__file__).resolve().parents[1]
+SKILLS_ROOT = REPO / "skills"
+SKILL_NAMES = (
+    "bilingual-paper-digest",
     "bilingual-paper-reader",
     "bilingual-book-reader",
     "knowledge-base-curator",
 )
-EXPECTED_ROOT_RUNTIME = {
-    "SKILL.md",
-    "agents",
-    "references",
-    "requirements-docling.txt",
-    "requirements-light.txt",
-    "scripts",
-}
-EXCLUDED_INSTALL_ENTRIES = {
-    ".git",
-    ".github",
-    ".gitignore",
-    ".bilingual-paper-digest",
-    "README.md",
-    "companions",
-    "examples",
-}
-EXCLUDED_INSTALL_SCRIPTS = {"install_skill.py", "run_checks.py"}
+ROOT_SKILL = SKILLS_ROOT / "bilingual-paper-digest"
 
 
-def run(command: list[str]) -> None:
+def run(command: list[str], expect_failure: bool = False) -> subprocess.CompletedProcess[str]:
     print("+ " + shlex.join(command))
-    subprocess.run(command, cwd=ROOT, check=True)
+    result = subprocess.run(command, cwd=REPO, text=True, capture_output=True)
+    if expect_failure:
+        if result.returncode == 0:
+            fail("command unexpectedly succeeded: " + shlex.join(command))
+        print(f"EXPECTED FAILURE ({result.returncode})")
+        if result.stdout:
+            print(result.stdout, end="")
+        if result.stderr:
+            print(result.stderr, end="")
+        return result
+    if result.stdout:
+        print(result.stdout, end="")
+    if result.stderr:
+        print(result.stderr, end="", file=sys.stderr)
+    if result.returncode != 0:
+        fail(f"command failed ({result.returncode}): " + shlex.join(command))
+    return result
 
 
 def fail(message: str) -> None:
@@ -52,167 +53,287 @@ def fail(message: str) -> None:
 def parse_frontmatter(skill: Path) -> tuple[dict[str, str], str]:
     text = skill.read_text(encoding="utf-8")
     if not text.startswith("---\n"):
-        fail(f"{skill.relative_to(ROOT)} must start with YAML frontmatter")
-
+        fail(f"{skill.relative_to(REPO)} must start with YAML frontmatter")
     parts = text.split("---\n", 2)
-    if len(parts) < 3:
-        fail(f"{skill.relative_to(ROOT)} frontmatter is not closed")
-
-    frontmatter = parts[1]
+    if len(parts) != 3:
+        fail(f"{skill.relative_to(REPO)} frontmatter is not closed")
     values: dict[str, str] = {}
     current_key = ""
-    for line in frontmatter.splitlines():
-        if not line.strip():
-            continue
+    for line in parts[1].splitlines():
         if line.startswith((" ", "\t")) and current_key:
             values[current_key] += " " + line.strip()
-            continue
-        if ":" not in line:
-            continue
-        key, value = line.split(":", 1)
-        current_key = key.strip()
-        values[current_key] = value.strip()
+        elif ":" in line:
+            key, value = line.split(":", 1)
+            current_key = key.strip()
+            values[current_key] = value.strip()
     return values, parts[2]
 
 
-def validate_skill_frontmatter(skill: Path, expected_name: str) -> None:
-    values, body = parse_frontmatter(skill)
-    display_path = skill.relative_to(ROOT)
-    if values.get("name") != expected_name:
-        fail(f"{display_path} frontmatter name must be {expected_name}")
-    if not values.get("description"):
-        fail(f"{display_path} frontmatter description is required")
-    extra_keys = sorted(set(values) - {"name", "description"})
-    if extra_keys:
-        fail(f"{display_path} has unsupported frontmatter keys: {', '.join(extra_keys)}")
-    if "[TODO" in body or "TODO:" in body:
-        fail(f"{display_path} still contains template TODO text")
-    if len(body.splitlines()) > 500:
-        fail(f"{display_path} body exceeds 500 lines")
+def check_skill_structure() -> None:
+    version = (REPO / "VERSION").read_text(encoding="utf-8").strip()
+    if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+        fail("VERSION must use semantic versioning")
+    if (REPO / "SKILL.md").exists():
+        fail("repository root must not contain SKILL.md; standard installers should discover skills/*")
+    discovered = sorted(path.parent.name for path in SKILLS_ROOT.glob("*/SKILL.md"))
+    if discovered != sorted(SKILL_NAMES):
+        fail(f"unexpected skill set: {discovered}")
+
+    for name in SKILL_NAMES:
+        skill_dir = SKILLS_ROOT / name
+        skill = skill_dir / "SKILL.md"
+        values, body = parse_frontmatter(skill)
+        if values.get("name") != name:
+            fail(f"{skill.relative_to(REPO)} frontmatter name must be {name}")
+        if not values.get("description"):
+            fail(f"{skill.relative_to(REPO)} description is required")
+        if set(values) != {"name", "description"}:
+            fail(f"{skill.relative_to(REPO)} frontmatter must contain only name and description")
+        if len(body.splitlines()) > 120:
+            fail(f"{skill.relative_to(REPO)} exceeds the lightweight 120-line limit")
+        if "[TODO" in body or "TODO:" in body:
+            fail(f"{skill.relative_to(REPO)} contains template TODO text")
+        metadata = skill_dir / "agents" / "openai.yaml"
+        if not metadata.exists() or f"${name}" not in metadata.read_text(encoding="utf-8"):
+            fail(f"{metadata.relative_to(REPO)} must reference ${name}")
+        if name != "bilingual-paper-digest" and "../bilingual-paper-digest" in skill.read_text(encoding="utf-8"):
+            fail(f"{name} still depends on a sibling skill")
 
 
-def check_skill_frontmatter() -> None:
-    validate_skill_frontmatter(ROOT / "SKILL.md", "bilingual-paper-digest")
-    for companion in COMPANION_SKILLS:
-        validate_skill_frontmatter(ROOT / "companions" / companion / "SKILL.md", companion)
-
-
-def referenced_paths(markdown: str) -> set[Path]:
-    paths: set[Path] = set()
-    for match in re.finditer(r"`([^`]+)`", markdown):
+def referenced_paths(text: str) -> set[str]:
+    paths: set[str] = set()
+    for match in re.finditer(r"`([^`]+)`", text):
         content = match.group(1).strip()
         if not content:
             continue
-        token = content.split()[0]
-        token = token.rstrip(".,;:")
-        if token.startswith("../bilingual-paper-digest/"):
-            token = token.removeprefix("../bilingual-paper-digest/")
-        if token == "SKILL.md" or token.startswith(
-            ("references/", "examples/", "scripts/", "companions/", "requirements-")
-        ):
-            paths.add(ROOT / token)
+        token = content.split()[0].rstrip(".,;:")
+        if token.startswith(("references/", "scripts/", "requirements-")):
+            paths.add(token)
     return paths
 
 
-def check_referenced_resources() -> None:
-    text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
-    text += "\n" + (ROOT / "README.md").read_text(encoding="utf-8")
-    for reference in sorted((ROOT / "references").glob("*.md")):
-        text += "\n" + reference.read_text(encoding="utf-8")
-    for companion in COMPANION_SKILLS:
-        text += "\n" + (ROOT / "companions" / companion / "SKILL.md").read_text(encoding="utf-8")
-    missing = sorted(path.relative_to(ROOT) for path in referenced_paths(text) if not path.exists())
-    if missing:
-        fail("Referenced resources do not exist: " + ", ".join(map(str, missing)))
+def check_references() -> None:
+    for name in SKILL_NAMES:
+        skill_dir = SKILLS_ROOT / name
+        markdown_files = [skill_dir / "SKILL.md", *sorted((skill_dir / "references").glob("*.md"))]
+        for markdown in markdown_files:
+            text = markdown.read_text(encoding="utf-8")
+            for relative in referenced_paths(text):
+                if not (skill_dir / relative).exists():
+                    fail(f"{markdown.relative_to(REPO)} references missing {relative}")
+            if markdown.parent.name == "references" and len(text.splitlines()) > 100:
+                first_lines = "\n".join(text.splitlines()[:35]).lower()
+                if "## contents" not in first_lines:
+                    fail(f"long reference needs a Contents section: {markdown.relative_to(REPO)}")
 
 
-def check_companion_metadata() -> None:
-    root_metadata = (ROOT / "agents" / "openai.yaml").read_text(encoding="utf-8")
-    if "$bilingual-paper-digest" not in root_metadata:
-        fail("Root openai.yaml default_prompt must mention $bilingual-paper-digest")
-    for companion in COMPANION_SKILLS:
-        skill_dir = ROOT / "companions" / companion
-        if not (skill_dir / "SKILL.md").exists():
-            fail(f"Companion missing SKILL.md: {companion}")
-        metadata = skill_dir / "agents" / "openai.yaml"
-        if not metadata.exists():
-            fail(f"Companion missing agents/openai.yaml: {companion}")
-        metadata_text = metadata.read_text(encoding="utf-8")
-        if f"${companion}" not in metadata_text:
-            fail(f"Companion openai.yaml default_prompt must mention ${companion}")
+def check_generated_skills() -> None:
+    run([sys.executable, "scripts/sync_skills.py", "--check"])
 
 
-def check_gitignore() -> None:
-    gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
-    for pattern in (".venv/", ".bilingual-paper-digest/", "translation_cache.jsonl"):
-        if pattern not in gitignore:
-            fail(f".gitignore missing runtime artifact pattern: {pattern}")
+def check_python() -> None:
+    for script in sorted(REPO.glob("scripts/*.py")) + sorted(SKILLS_ROOT.glob("*/scripts/*.py")):
+        print(f"compile {script.relative_to(REPO)}")
+        compile(script.read_text(encoding="utf-8"), str(script), "exec")
 
 
-def check_scripts_compile() -> None:
-    for script in sorted((ROOT / "scripts").glob("*.py")):
-        print(f"py_compile {script.relative_to(ROOT)}")
-        py_compile.compile(str(script), doraise=True)
+def check_sentence_boundaries() -> None:
+    namespace = runpy.run_path(str(ROOT_SKILL / "scripts" / "build_translation_units.py"))
+    split_sentences = namespace["split_sentences"]
+    cases = {
+        "This is sentence one. This is sentence two.": 2,
+        "Results were significant (P < 0.05). However, the effect was small.": 2,
+        "Smith et al. reported the result. It was replicated.": 2,
+        "The U.S. population was studied. Results were stable.": 2,
+        "The finding was reported by Smith et al. This result was replicated.": 2,
+    }
+    for text, expected in cases.items():
+        actual = len(split_sentences(text))
+        if actual != expected:
+            fail(f"sentence boundary regression: expected {expected}, got {actual}: {text}")
 
 
-def smoke_translation_cache_and_alignment() -> None:
-    with tempfile.TemporaryDirectory(prefix="bpd-check-") as tmp:
-        tmp_path = Path(tmp)
-        units_path = tmp_path / "units.jsonl"
-        cache_path = tmp_path / "translation_cache.jsonl"
-        cached_path = tmp_path / "units.cached.jsonl"
-        updated_cache_path = tmp_path / "translation_cache.updated.jsonl"
-        note_path = tmp_path / "note.md"
+def check_requirements() -> None:
+    for requirement_file in SKILLS_ROOT.glob("*/requirements-*.txt"):
+        for line in requirement_file.read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if stripped and not stripped.startswith("#") and "<" not in stripped:
+                fail(f"dependency lacks an upper compatibility bound: {requirement_file.relative_to(REPO)}: {stripped}")
 
-        units = [
-            {
-                "translation_unit_id": "U0001",
-                "page": 1,
-                "source_hash": "hash-1",
-                "source_sentence": "Leaf-inspired eutectic skins show robust wet adhesion [1].",
-                "translation": "",
-                "status": "pending",
-            },
-            {
-                "translation_unit_id": "U0002",
-                "page": 1,
-                "source_hash": "hash-2",
-                "source_sentence": "They maintain fatigue resistance under repeated deformation.",
-                "translation": "它们在重复变形下保持抗疲劳性。",
-                "status": "checked",
-            },
-        ]
-        cache = [
-            {
-                "source_hash": "hash-1",
-                "source_sentence": units[0]["source_sentence"],
-                "translation": "叶启发的共晶皮肤表现出稳健的湿态黏附性[1]。",
-                "status": "checked",
-            }
-        ]
 
-        for path, records in ((units_path, units), (cache_path, cache)):
-            with path.open("w", encoding="utf-8") as handle:
-                for record in records:
-                    handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+def check_eval_scenarios() -> None:
+    path = REPO / "evals" / "scenarios.jsonl"
+    prompts: set[str] = set()
+    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        record = json.loads(line)
+        prompt = str(record.get("prompt", "")).strip()
+        expected = record.get("expected_skill")
+        if not prompt or prompt in prompts:
+            fail(f"{path.relative_to(REPO)}:{line_number} has an empty or duplicate prompt")
+        if expected is not None and expected not in SKILL_NAMES:
+            fail(f"{path.relative_to(REPO)}:{line_number} has unknown expected_skill")
+        if not record.get("must_preserve"):
+            fail(f"{path.relative_to(REPO)}:{line_number} needs observable invariants")
+        prompts.add(prompt)
 
-        note_path.write_text(
-            "\n".join(
-                [
-                    "Leaf-inspired eutectic skins show robust wet adhesion [1].",
-                    "\t叶启发的共晶皮肤表现出稳健的湿态黏附性[1]。",
-                    "- They maintain fatigue resistance under repeated deformation.",
-                    "\t它们在重复变形下保持抗疲劳性。",
-                    "",
-                ]
-            ),
-            encoding="utf-8",
+
+def read_jsonl(path: Path) -> list[dict[str, object]]:
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def write_jsonl(path: Path, records: list[dict[str, object]]) -> None:
+    path.write_text(
+        "".join(json.dumps(record, ensure_ascii=False) + "\n" for record in records),
+        encoding="utf-8",
+    )
+
+
+def create_text_pdf(path: Path) -> None:
+    content = b"BT /F1 12 Tf 72 720 Td (Fixture DOI 10.1234/test.2026. Results were significant.) Tj ET"
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        b"<< /Length " + str(len(content)).encode("ascii") + b" >>\nstream\n" + content + b"\nendstream",
+        b"<< /Title (Academic Fixture) /Author (Bilingual Paper Digest) >>",
+    ]
+    payload = bytearray(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n")
+    offsets = [0]
+    for number, body in enumerate(objects, start=1):
+        offsets.append(len(payload))
+        payload.extend(f"{number} 0 obj\n".encode("ascii"))
+        payload.extend(body)
+        payload.extend(b"\nendobj\n")
+    xref = len(payload)
+    payload.extend(f"xref\n0 {len(objects) + 1}\n".encode("ascii"))
+    payload.extend(b"0000000000 65535 f \n")
+    for offset in offsets[1:]:
+        payload.extend(f"{offset:010d} 00000 n \n".encode("ascii"))
+    payload.extend(
+        f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R /Info 6 0 R >>\n"
+        f"startxref\n{xref}\n%%EOF\n".encode("ascii")
+    )
+    path.write_bytes(payload)
+
+
+def smoke_real_pdf_extraction() -> None:
+    if importlib.util.find_spec("pypdf") is None:
+        print("SKIP real PDF extraction smoke: optional pypdf is not installed")
+        return
+    with tempfile.TemporaryDirectory(prefix="bpd-pdf-") as temporary:
+        tmp = Path(temporary)
+        pdf = tmp / "fixture.pdf"
+        output = tmp / "extracted"
+        create_text_pdf(pdf)
+        run(
+            [
+                sys.executable,
+                str(ROOT_SKILL / "scripts" / "extract_pdf_structure.py"),
+                str(pdf),
+                "--method",
+                "pypdf",
+                "--out-dir",
+                str(output),
+            ]
+        )
+        records = read_jsonl(output / "source.jsonl")
+        manifest = json.loads((output / "source_map.json").read_text(encoding="utf-8"))
+        if not records or "Results were significant" not in str(records[0].get("text", "")):
+            fail("real PDF smoke did not extract the expected text")
+        if manifest.get("detected_doi") != "10.1234/test.2026":
+            fail("real PDF smoke did not detect the fixture DOI")
+        metadata = manifest.get("document_metadata", {})
+        if not isinstance(metadata, dict) or metadata.get("Title") != "Academic Fixture":
+            fail("real PDF smoke did not preserve PDF metadata")
+
+
+def smoke_golden_pipeline() -> None:
+    translations = {
+        "Results were significant (P < 0.05).": "结果具有统计学显著性（P < 0.05）。",
+        "However, the effect was not observed at 2.5 mg [1-3].": "然而，在2.5 mg时未观察到该效应[1-3]。",
+        "Smith et al. measured IL-6 and p53 expression.": "Smith等测量了IL-6和p53的表达。",
+        "The 95% CI was 1.2-2.4.": "95% CI为1.2-2.4。",
+    }
+    script = ROOT_SKILL / "scripts"
+    with tempfile.TemporaryDirectory(prefix="bpd-golden-") as temporary:
+        tmp = Path(temporary)
+        units_path = tmp / "units.jsonl"
+        translated_path = tmp / "translated.jsonl"
+        note_path = tmp / "note.md"
+        cache_path = tmp / "cache.jsonl"
+        cached_path = tmp / "cached.jsonl"
+
+        run(
+            [
+                sys.executable,
+                str(script / "build_translation_units.py"),
+                "tests/fixtures/academic-source.jsonl",
+                "--out",
+                str(units_path),
+            ]
+        )
+        units = read_jsonl(units_path)
+        if len(units) != 4 or [unit.get("sentence_count") for unit in units] != [2, 2, 2, 2]:
+            fail("sentence splitter did not create two sentences for each fixture paragraph")
+        if len({unit.get("paragraph_id") for unit in units}) != 2:
+            fail("translation units lost paragraph identity")
+
+        for unit in units:
+            sentence = str(unit.get("source_sentence", ""))
+            unit["translation"] = translations[sentence]
+            unit["status"] = "checked"
+        write_jsonl(translated_path, units)
+
+        run([sys.executable, str(script / "check_bilingual_quality.py"), "--units", str(translated_path)])
+        run(
+            [
+                sys.executable,
+                str(script / "render_bilingual_markdown.py"),
+                "--units",
+                str(translated_path),
+                "--out",
+                str(note_path),
+            ]
+        )
+        expected = (REPO / "tests" / "golden" / "academic-note-body.md").read_text(encoding="utf-8")
+        if note_path.read_text(encoding="utf-8") != expected:
+            fail("rendered bilingual Markdown differs from the golden output")
+        run(
+            [
+                sys.executable,
+                str(script / "check_source_alignment.py"),
+                "--units",
+                str(translated_path),
+                "--markdown",
+                str(note_path),
+            ]
+        )
+
+        bad_units = json.loads(json.dumps(units))
+        bad_units[1]["translation"] = "然而，在5 mg时观察到该效应。"
+        bad_path = tmp / "bad.jsonl"
+        write_jsonl(bad_path, bad_units)
+        run(
+            [sys.executable, str(script / "check_bilingual_quality.py"), "--units", str(bad_path)],
+            expect_failure=True,
         )
 
         run(
             [
                 sys.executable,
-                "scripts/translation_cache.py",
+                str(script / "translation_cache.py"),
+                "update",
+                "--units",
+                str(translated_path),
+                "--cache",
+                str(cache_path),
+            ]
+        )
+        run(
+            [
+                sys.executable,
+                str(script / "translation_cache.py"),
                 "apply",
                 "--units",
                 str(units_path),
@@ -222,92 +343,175 @@ def smoke_translation_cache_and_alignment() -> None:
                 str(cached_path),
             ]
         )
-        cached_records = [json.loads(line) for line in cached_path.read_text(encoding="utf-8").splitlines()]
-        if not cached_records[0].get("translation"):
-            fail("translation_cache.py apply did not fill cached translation")
+        if not all(str(unit.get("translation", "")).strip() for unit in read_jsonl(cached_path)):
+            fail("translation cache did not restore all checked units")
 
+
+def smoke_batch_resume() -> None:
+    script = ROOT_SKILL / "scripts"
+    translations = {
+        "Results were significant (P < 0.05).": "结果具有统计学显著性（P < 0.05）。",
+        "However, the effect was not observed at 2.5 mg [1-3].": "然而，在2.5 mg时未观察到该效应[1-3]。",
+    }
+    with tempfile.TemporaryDirectory(prefix="bpd-resume-") as temporary:
+        tmp = Path(temporary)
+        units = tmp / "units.jsonl"
+        batch = tmp / "batch.jsonl"
+        partial = tmp / "partial.md"
+        strict = tmp / "strict.md"
         run(
             [
                 sys.executable,
-                "scripts/translation_cache.py",
-                "update",
-                "--units",
-                str(cached_path),
-                "--cache",
-                str(updated_cache_path),
+                str(script / "build_translation_units.py"),
+                "tests/fixtures/academic-source.jsonl",
+                "--out",
+                str(units),
             ]
         )
         run(
             [
                 sys.executable,
-                "scripts/check_source_alignment.py",
+                str(script / "translation_cache.py"),
+                "batch",
                 "--units",
-                str(units_path),
-                "--markdown",
-                str(note_path),
-                "--statuses",
-                "pending,checked",
+                str(units),
+                "--out",
+                str(batch),
+                "--limit",
+                "2",
             ]
         )
+        batch_records = read_jsonl(batch)
+        for unit in batch_records:
+            unit["translation"] = translations[str(unit["source_sentence"])]
+            unit["status"] = "translated"
+        write_jsonl(batch, batch_records)
+        run(
+            [
+                sys.executable,
+                str(script / "translation_cache.py"),
+                "merge",
+                "--units",
+                str(units),
+                "--batch",
+                str(batch),
+            ]
+        )
+        run(
+            [
+                sys.executable,
+                str(script / "render_bilingual_markdown.py"),
+                "--units",
+                str(units),
+                "--out",
+                str(strict),
+            ],
+            expect_failure=True,
+        )
+        run(
+            [
+                sys.executable,
+                str(script / "render_bilingual_markdown.py"),
+                "--units",
+                str(units),
+                "--out",
+                str(partial),
+                "--partial",
+            ]
+        )
+        partial_text = partial.read_text(encoding="utf-8")
+        if "Smith et al." in partial_text or "2.5 mg" not in partial_text:
+            fail("partial renderer did not stop at the first incomplete paragraph")
+
+
+def relative_files(root: Path) -> dict[Path, bytes]:
+    files: dict[Path, bytes] = {}
+    for path in root.rglob("*"):
+        if not path.is_file() or ".venv" in path.parts or "__pycache__" in path.parts:
+            continue
+        files[path.relative_to(root)] = path.read_bytes()
+    return files
 
 
 def smoke_installer() -> None:
-    with tempfile.TemporaryDirectory(prefix="bpd-install-") as tmp:
-        codex_home = Path(tmp)
+    with tempfile.TemporaryDirectory(prefix="bpd-install-") as temporary:
+        codex_home = Path(temporary) / "all"
         run([sys.executable, "scripts/install_skill.py", "--codex-home", str(codex_home), "--clean"])
-        installed = codex_home / "skills" / "bilingual-paper-digest"
-        if not (installed / "SKILL.md").exists():
-            fail("install_skill.py did not install SKILL.md")
-        installed_entries = {path.name for path in installed.iterdir()}
-        if installed_entries != EXPECTED_ROOT_RUNTIME:
-            fail(f"Unexpected installed root entries: {sorted(installed_entries)}")
-        for excluded in EXCLUDED_INSTALL_ENTRIES:
-            if (installed / excluded).exists():
-                fail(f"install_skill.py copied repository-only entry: {excluded}")
-        for excluded in EXCLUDED_INSTALL_SCRIPTS:
-            if (installed / "scripts" / excluded).exists():
-                fail(f"install_skill.py copied repository-only script: {excluded}")
-        for companion in COMPANION_SKILLS:
-            companion_dir = codex_home / "skills" / companion
-            if not (companion_dir / "SKILL.md").exists():
-                fail(f"install_skill.py did not install companion: {companion}")
-            companion_entries = {path.name for path in companion_dir.iterdir()}
-            if companion_entries != {"SKILL.md", "agents"}:
-                fail(f"Unexpected installed companion entries for {companion}: {sorted(companion_entries)}")
-            sibling_root = companion_dir.parent / "bilingual-paper-digest" / "SKILL.md"
-            if not sibling_root.exists():
-                fail(f"Installed companion cannot find sibling root skill: {companion}")
+        installed_root = codex_home / "skills"
+        if sorted(path.name for path in installed_root.iterdir()) != sorted(SKILL_NAMES):
+            fail("installer did not install the four standard skill entries")
+        for name in SKILL_NAMES:
+            if relative_files(installed_root / name) != relative_files(SKILLS_ROOT / name):
+                fail(f"installed files differ from source skill: {name}")
 
-        preserved = installed / ".venv" / "preserved.txt"
+        preserved = installed_root / "bilingual-paper-digest" / ".venv" / "preserved.txt"
         preserved.parent.mkdir()
         preserved.write_text("keep", encoding="utf-8")
-        (installed / "README.md").write_text("stale", encoding="utf-8")
-        (installed / "references" / "stale.md").write_text("stale", encoding="utf-8")
+        stale = installed_root / "bilingual-paper-digest" / "stale.txt"
+        stale.write_text("remove", encoding="utf-8")
         run([sys.executable, "scripts/install_skill.py", "--codex-home", str(codex_home)])
-        if not preserved.exists():
-            fail("Normal installer update removed the optional .venv")
-        if (installed / "README.md").exists() or (installed / "references" / "stale.md").exists():
-            fail("Normal installer update did not remove stale repository-owned files")
+        if not preserved.exists() or stale.exists():
+            fail("installer update did not preserve .venv or remove stale files")
+
+        single_home = Path(temporary) / "single"
+        run(
+            [
+                sys.executable,
+                "scripts/install_skill.py",
+                "--codex-home",
+                str(single_home),
+                "--skill",
+                "bilingual-paper-reader",
+            ]
+        )
+        single_root = single_home / "skills"
+        if [path.name for path in single_root.iterdir()] != ["bilingual-paper-reader"]:
+            fail("single-skill installation installed unexpected entries")
+        if not (single_root / "bilingual-paper-reader" / "scripts" / "check_digest.py").exists():
+            fail("standalone paper reader lacks its validator")
 
 
-def main() -> int:
-    check_skill_frontmatter()
-    check_referenced_resources()
-    check_companion_metadata()
-    check_gitignore()
-    check_scripts_compile()
-    run([sys.executable, "scripts/check_digest.py", "examples/minimal-paper-note.md", "examples/obsidian-material-note.md"])
+def check_examples() -> None:
     run(
         [
             sys.executable,
-            "scripts/check_knowledge_cards.py",
+            str(ROOT_SKILL / "scripts" / "check_digest.py"),
+            "examples/minimal-paper-note.md",
+            "examples/obsidian-material-note.md",
+        ]
+    )
+    run(
+        [
+            sys.executable,
+            str(ROOT_SKILL / "scripts" / "check_knowledge_cards.py"),
             "--strict",
             "examples/knowledge-card-term.md",
             "examples/knowledge-card-statistics.md",
         ]
     )
-    smoke_translation_cache_and_alignment()
+
+
+def check_lightweight() -> None:
+    total = sum(len(content) for name in SKILL_NAMES for content in relative_files(SKILLS_ROOT / name).values())
+    print(f"Self-contained suite size: {total} bytes")
+    if total > 600_000:
+        fail("installed four-skill suite exceeds the 600 KB lightweight budget")
+
+
+def main() -> int:
+    check_skill_structure()
+    check_references()
+    check_generated_skills()
+    check_python()
+    check_sentence_boundaries()
+    check_requirements()
+    check_eval_scenarios()
+    check_examples()
+    smoke_golden_pipeline()
+    smoke_batch_resume()
+    smoke_real_pdf_extraction()
     smoke_installer()
+    check_lightweight()
     print("All checks passed.")
     return 0
 

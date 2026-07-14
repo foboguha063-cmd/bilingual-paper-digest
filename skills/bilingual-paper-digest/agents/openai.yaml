@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bilingual Paper Digest"
+  short_description: "Route and audit bilingual academic workflows"
+  default_prompt: "Use $bilingual-paper-digest to coordinate this mixed academic reading, translation, audit, or knowledge-card request."
